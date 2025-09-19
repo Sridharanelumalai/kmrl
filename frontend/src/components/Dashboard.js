@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Progress, Table, Button, message, Modal, Tag } from 'antd';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { ReloadOutlined, ExperimentOutlined } from '@ant-design/icons';
-import { inductionService } from '../services/api';
+import { Card, Row, Col, Progress, Table, Button, message, Modal, Tag, Skeleton, Spin } from 'antd';
+
+import { ReloadOutlined, ExperimentOutlined, LoadingOutlined } from '@ant-design/icons';
+import { inductionService, trainService } from '../services/api';
 import moment from 'moment';
 
 const Dashboard = () => {
@@ -10,14 +10,24 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [anomalyModalVisible, setAnomalyModalVisible] = useState(false);
   const [anomalyDetails, setAnomalyDetails] = useState([]);
+  const [trainModalVisible, setTrainModalVisible] = useState(false);
+  const [trainDetails, setTrainDetails] = useState([]);
+  const [trainModalTitle, setTrainModalTitle] = useState('');
+  const [trainLoading, setTrainLoading] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      console.log('Attempting to connect to backend at:', 'http://localhost:8084/api/induction/dashboard');
       const response = await inductionService.getDashboardData();
-      setDashboardData(response.data);
+      console.log('Backend response received:', response);
+      // Handle Spring Boot response format
+      const data = response.data.data || response.data;
+      setDashboardData(data);
+      message.success('Backend connected successfully!');
     } catch (error) {
       console.error('Dashboard error:', error);
+      console.error('Error details:', error.response || error.message);
       // Use mock data when backend is not available
       const mockData = {
         fleet_metrics: {
@@ -46,9 +56,35 @@ const Dashboard = () => {
         }))
       };
       setDashboardData(mockData);
-      message.warning('Using demo data - Backend server not connected');
+      message.warning('Backend not available - Using demo data');
+      console.log('Falling back to mock data due to:', error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const showTrainDetails = async (type, title) => {
+    try {
+      setTrainLoading(true);
+      setTrainModalTitle(title);
+      setTrainModalVisible(true);
+      
+      let response;
+      if (type === 'all') {
+        response = await trainService.getAllTrains();
+      } else if (type === 'available') {
+        response = await trainService.getAvailableTrains();
+      } else if (type === 'maintenance') {
+        response = await trainService.getMaintenanceTrains();
+      }
+      
+      const data = response.data.data || response.data;
+      setTrainDetails(data);
+    } catch (error) {
+      console.error('Error fetching train details:', error);
+      message.error('Failed to load train details');
+    } finally {
+      setTrainLoading(false);
     }
   };
 
@@ -57,40 +93,175 @@ const Dashboard = () => {
   }, []);
 
   if (loading || !dashboardData) {
-    return <div>Loading dashboard...</div>;
+    return (
+      <div className="dashboard-container" style={{ padding: '24px' }}>
+        <style>
+          {`
+            @keyframes pulse {
+              0%, 100% { opacity: 1; }
+              50% { opacity: 0.5; }
+            }
+            @keyframes shimmer {
+              0% { background-position: -200px 0; }
+              100% { background-position: calc(200px + 100%) 0; }
+            }
+            .loading-shimmer {
+              background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+              background-size: 200px 100%;
+              animation: shimmer 1.5s infinite;
+            }
+            .pulse-animation {
+              animation: pulse 2s infinite;
+            }
+          `}
+        </style>
+        
+        {/* Loading Header */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col span={24}>
+            <Card style={{ 
+              background: '#1a7f72',
+              border: 'none',
+              boxShadow: '0 10px 30px rgba(26, 127, 114, 0.3)',
+              overflow: 'hidden',
+              position: 'relative'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '-30%',
+                right: '-5%',
+                width: '120px',
+                height: '120px',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '50%',
+                animation: 'pulse 3s ease-in-out infinite'
+              }}></div>
+              <Row justify="space-between" align="middle">
+                <Col>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <Spin indicator={<LoadingOutlined style={{ fontSize: 36, color: 'white' }} spin />} />
+                    <div>
+                      <h2 style={{ color: 'white', margin: 0, fontSize: '28px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Loading Dashboard...</h2>
+                      <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', marginTop: '4px' }}>Fetching real-time data</div>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Loading Metrics */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          {[1,2,3,4].map(i => (
+            <Col xs={24} sm={12} md={6} key={i}>
+              <Card style={{ 
+                background: 'white',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(26, 127, 114, 0.1)',
+                overflow: 'hidden'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ flex: 1 }}>
+                    <Skeleton.Input style={{ width: 80, height: 16, marginBottom: 8 }} active />
+                    <Skeleton.Input style={{ width: 60, height: 32 }} active />
+                  </div>
+                  <div className="loading-shimmer" style={{ 
+                    width: '40px', 
+                    height: '40px', 
+                    borderRadius: '50%',
+                    opacity: 0.3 
+                  }}></div>
+                </div>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+
+        {/* Loading Depot Table */}
+        <Row gutter={[16, 16]}>
+          <Col span={24}>
+            <Card 
+              style={{
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                border: '1px solid #e5e7eb'
+              }}
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div className="pulse-animation" style={{ fontSize: '24px' }}>🏭</div>
+                  <div>
+                    <Skeleton.Input style={{ width: 200, height: 18 }} active />
+                    <Skeleton.Input style={{ width: 300, height: 12, marginTop: 4 }} active />
+                  </div>
+                </div>
+              }
+            >
+              <Skeleton active paragraph={{ rows: 4 }} />
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    );
   }
 
-  const { fleet_metrics, anomaly_metrics, depot_utilization, recent_sensor_data } = dashboardData;
+  const { fleet_metrics, anomaly_metrics, depot_utilization } = dashboardData;
 
-  // Prepare sensor data for chart
-  const sensorChartData = recent_sensor_data.slice(-10).map((sensor, index) => ({
-    time: `T${index + 1}`,
-    value: sensor.value,
-    type: sensor.sensor_type,
-    anomaly: sensor.is_anomaly
-  }));
+
 
   const depotColumns = [
     {
       title: 'Depot Name',
       dataIndex: 'name',
       key: 'name',
+      render: (name) => (
+        <div>
+          <strong>{name}</strong>
+          <div style={{ fontSize: '11px', color: '#666' }}>
+            {name.includes('Aluva') ? 'Main Depot - 15 Bays' : 
+             name.includes('Pettah') ? 'Central Depot - 10 Bays' : 
+             'Service Depot - 12 Bays'}
+          </div>
+        </div>
+      )
     },
     {
-      title: 'Utilization',
+      title: 'Current Utilization',
       dataIndex: 'utilization',
       key: 'utilization',
       render: (value) => (
-        <Progress 
-          percent={Math.round(value)} 
-          status={value > 80 ? 'exception' : value > 60 ? 'active' : 'success'}
-        />
+        <div>
+          <Progress 
+            percent={Math.round(value)} 
+            status={value > 80 ? 'exception' : value > 60 ? 'active' : 'success'}
+            format={(percent) => `${percent}%`}
+          />
+          <div style={{ fontSize: '11px', color: '#666', marginTop: '4px' }}>
+            {value > 80 ? 'Critical - Consider load balancing' : 
+             value > 60 ? 'Busy - Monitor closely' : 
+             'Normal operations'}
+          </div>
+        </div>
       ),
     },
     {
-      title: 'Available Slots',
+      title: 'Available Maintenance Bays',
       dataIndex: 'available_slots',
       key: 'available_slots',
+      render: (slots, record) => {
+        const totalBays = record.name.includes('Aluva') ? 15 : 
+                         record.name.includes('Pettah') ? 10 : 12;
+        const occupiedBays = totalBays - slots;
+        return (
+          <div>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: slots > 3 ? '#52c41a' : slots > 1 ? '#faad14' : '#ff4d4f' }}>
+              {slots} / {totalBays}
+            </div>
+            <div style={{ fontSize: '11px', color: '#666' }}>
+              {occupiedBays} bays occupied
+            </div>
+          </div>
+        );
+      }
     },
   ];
 
@@ -98,18 +269,67 @@ const Dashboard = () => {
     <div className="dashboard-container">
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col span={24}>
-          <Card>
+          <Card style={{ 
+            background: '#1a7f72',
+            border: 'none',
+            boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+            overflow: 'hidden',
+            position: 'relative'
+          }}>
+            <style>
+              {`
+                @keyframes gradientShift {
+                  0% { background-position: 0% 50%; }
+                  50% { background-position: 100% 50%; }
+                  100% { background-position: 0% 50%; }
+                }
+                @keyframes pulse {
+                  0%, 100% { transform: scale(1); }
+                  50% { transform: scale(1.05); }
+                }
+              `}
+            </style>
+            <div style={{
+              position: 'absolute',
+              top: '-50%',
+              right: '-20%',
+              width: '200px',
+              height: '200px',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '50%',
+              animation: 'pulse 3s ease-in-out infinite'
+            }}></div>
             <Row justify="space-between" align="middle">
               <Col>
-                <h2>KMRL Train Induction Planning Dashboard</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ 
+                    fontSize: '36px',
+                    background: 'rgba(255,255,255,0.2)',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    backdropFilter: 'blur(10px)',
+                    animation: 'pulse 2s ease-in-out infinite'
+                  }}>📊</div>
+                  <div>
+                    <h2 style={{ color: 'white', margin: 0, fontSize: '28px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>KMRL Dashboard</h2>
+                    <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', marginTop: '4px' }}>Real-time Train Operations Overview</div>
+                  </div>
+                </div>
               </Col>
               <Col>
                 <Button 
                   icon={<ReloadOutlined />} 
                   onClick={fetchDashboardData}
                   loading={loading}
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    color: 'white',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                  }}
                 >
-                  Refresh
+                  Refresh Data
                 </Button>
               </Col>
             </Row>
@@ -120,85 +340,141 @@ const Dashboard = () => {
       {/* Fleet Metrics */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Total Trains"
-              value={fleet_metrics.total_trains}
-              valueStyle={{ color: '#1890ff' }}
-            />
+          <Card 
+            hoverable
+            onClick={() => showTrainDetails('all', 'All Trains')}
+            style={{ 
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Total Trains</div>
+                <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.total_trains}</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>Click to view details</div>
+              </div>
+              <div style={{ fontSize: '40px', opacity: 0.3 }}>🚊</div>
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Available Trains"
-              value={fleet_metrics.available_trains}
-              valueStyle={{ color: '#52c41a' }}
-            />
+          <Card 
+            hoverable
+            onClick={() => showTrainDetails('available', 'Available Trains')}
+            style={{ 
+              background: 'linear-gradient(135deg, #10b981, #059669)',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Available Trains</div>
+                <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.available_trains}</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>Click to view details</div>
+              </div>
+              <div style={{ fontSize: '40px', opacity: 0.3 }}>✅</div>
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Maintenance Due"
-              value={fleet_metrics.maintenance_due}
-              valueStyle={{ color: '#faad14' }}
-            />
+          <Card 
+            hoverable
+            onClick={() => showTrainDetails('maintenance', 'Maintenance Due Trains')}
+            style={{ 
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Maintenance Due</div>
+                <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.maintenance_due}</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>Click to view details</div>
+              </div>
+              <div style={{ fontSize: '40px', opacity: 0.3 }}>🔧</div>
+            </div>
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Fleet Availability"
-              value={fleet_metrics.availability_percentage}
-              precision={1}
-              suffix="%"
-              valueStyle={{ color: '#52c41a' }}
-            />
+          <Card style={{ 
+            background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Fleet Availability</div>
+                <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.availability_percentage}%</div>
+              </div>
+              <div style={{ fontSize: '40px', opacity: 0.3 }}>📈</div>
+            </div>
           </Card>
         </Col>
       </Row>
 
-      {/* Charts and Tables */}
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={12}>
-          <Card title="Recent Sensor Readings" style={{ height: 400 }}>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={sensorChartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="time" />
-                <YAxis />
-                <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#1890ff" 
-                  strokeWidth={2}
-                  dot={{ fill: '#1890ff', r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
 
-        <Col xs={24} lg={12}>
-          <Card title="Depot Utilization" style={{ height: 400 }}>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={depot_utilization}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="utilization" fill="#1890ff" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
-        </Col>
-      </Row>
 
       <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
         <Col span={24}>
-          <Card title="Depot Status Details">
+          <Card 
+            style={{
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              border: '1px solid #e5e7eb'
+            }}
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ fontSize: '24px' }}>🏭</div>
+                <div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#059669' }}>Depot Status Details</div>
+                  <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#666', marginTop: '2px' }}>
+                    Real-time maintenance facility capacity and workload distribution
+                  </div>
+                </div>
+              </div>
+            }
+            extra={
+              <div style={{ 
+                fontSize: '11px', 
+                color: '#999',
+                background: '#f3f4f6',
+                padding: '4px 8px',
+                borderRadius: '4px'
+              }}>
+                🕒 Last updated: {moment().format('HH:mm:ss')} | Auto-refresh: 30s
+              </div>
+            }
+          >
+            <div style={{ 
+              marginBottom: '16px', 
+              padding: '16px', 
+              background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', 
+              borderRadius: '12px', 
+              border: '1px solid #a7f3d0',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ 
+                position: 'absolute',
+                top: '-10px',
+                right: '-10px',
+                fontSize: '60px',
+                opacity: 0.1
+              }}>💡</div>
+              <div style={{ fontSize: '13px', color: '#059669', lineHeight: '1.5' }}>
+                <strong>💡 Smart Scheduling Insight:</strong> This real-time data enables our AI system to optimize train scheduling by ensuring maintenance bays are available when needed. 
+                High utilization (>80%) may cause scheduling delays and requires intelligent load balancing across depots.
+              </div>
+            </div>
             <Table 
               columns={depotColumns} 
               dataSource={depot_utilization}
@@ -217,7 +493,7 @@ const Dashboard = () => {
               <Row align="middle">
                 <Col flex="auto">
                   <h4 style={{ color: '#ff4d4f', margin: 0 }}>
-                    ⚠️ {anomaly_metrics.total_anomalies} sensor anomalies detected 
+                    WARNING: {anomaly_metrics.total_anomalies} sensor anomalies detected 
                     across {anomaly_metrics.trains_with_anomalies} trains
                   </h4>
                 </Col>
@@ -240,6 +516,86 @@ const Dashboard = () => {
           </Col>
         </Row>
       )}
+
+      {/* Train Details Modal */}
+      <Modal
+        title={trainModalTitle}
+        visible={trainModalVisible}
+        onCancel={() => setTrainModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setTrainModalVisible(false)}>
+            Close
+          </Button>
+        ]}
+        width={1000}
+      >
+        <Table
+          dataSource={trainDetails}
+          rowKey="id"
+          loading={trainLoading}
+          columns={[
+            {
+              title: 'Train Number',
+              dataIndex: 'train_number',
+              key: 'train_number',
+              render: (number) => <strong style={{ color: '#1a7f72' }}>{number}</strong>
+            },
+            {
+              title: 'Status',
+              dataIndex: 'status',
+              key: 'status',
+              render: (status) => {
+                const color = status === 'Available' ? 'green' : 
+                             status === 'In Service' ? 'blue' : 'orange';
+                return <Tag color={color}>{status.toUpperCase()}</Tag>;
+              }
+            },
+            {
+              title: 'Current Depot',
+              dataIndex: 'current_depot',
+              key: 'current_depot'
+            },
+            {
+              title: 'Mileage',
+              dataIndex: 'mileage',
+              key: 'mileage',
+              render: (mileage) => `${mileage.toLocaleString()} km`
+            },
+            {
+              title: 'Health Score',
+              dataIndex: 'health_score',
+              key: 'health_score',
+              render: (score) => (
+                <div>
+                  <Progress 
+                    percent={score} 
+                    size="small" 
+                    status={score > 80 ? 'success' : score > 60 ? 'active' : 'exception'}
+                    format={(percent) => `${percent}%`}
+                  />
+                </div>
+              )
+            },
+            {
+              title: 'Priority',
+              dataIndex: 'priority',
+              key: 'priority',
+              render: (priority) => {
+                const color = priority === 'Critical' ? 'red' : 
+                             priority === 'Warning' ? 'orange' : 'green';
+                return <Tag color={color}>{priority.toUpperCase()}</Tag>;
+              }
+            },
+            {
+              title: 'Last Maintenance',
+              dataIndex: 'last_maintenance',
+              key: 'last_maintenance',
+              render: (date) => moment(date).format('MMM DD, YYYY')
+            }
+          ]}
+          pagination={{ pageSize: 10 }}
+        />
+      </Modal>
 
       {/* Anomaly Details Modal */}
       <Modal

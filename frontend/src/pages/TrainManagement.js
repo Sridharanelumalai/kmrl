@@ -19,8 +19,9 @@ const TrainManagement = () => {
   const fetchTrains = async () => {
     try {
       setLoading(true);
-      const response = await trainService.getTrains();
-      setTrains(response.data);
+      const response = await trainService.getAllTrains();
+      const data = response.data.data || response.data;
+      setTrains(data);
     } catch (error) {
       console.error('Failed to fetch trains:', error);
       // Use mock data when backend is not available
@@ -96,12 +97,13 @@ const TrainManagement = () => {
 
   const handleCreateTrain = async (values) => {
     try {
-      await trainService.createTrain(values);
+      const response = await trainService.createTrain(values);
       message.success('Train created successfully');
       setModalVisible(false);
       form.resetFields();
       fetchTrains();
     } catch (error) {
+      console.error('Create train error:', error);
       message.error('Failed to create train');
     }
   };
@@ -140,10 +142,10 @@ const TrainManagement = () => {
     },
     {
       title: 'Current Mileage',
-      dataIndex: 'current_mileage',
-      key: 'current_mileage',
-      render: (mileage) => `${mileage.toFixed(0)} km`,
-      sorter: (a, b) => a.current_mileage - b.current_mileage,
+      dataIndex: 'mileage',
+      key: 'mileage',
+      render: (mileage) => `${mileage?.toLocaleString() || 0} km`,
+      sorter: (a, b) => (a.mileage || 0) - (b.mileage || 0),
     },
     {
       title: 'Status',
@@ -359,7 +361,7 @@ const TrainManagement = () => {
                   <strong>Model:</strong> {selectedTrain.model}
                 </Col>
                 <Col span={8}>
-                  <strong>Mileage:</strong> {selectedTrain.current_mileage.toFixed(0)} km
+                  <strong>Mileage:</strong> {selectedTrain.mileage?.toLocaleString() || 0} km
                 </Col>
                 <Col span={8}>
                   <strong>Status:</strong> 
