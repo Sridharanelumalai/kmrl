@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography, Row, Col } from 'antd';
+import { Input, Button, Card, message, Typography, Row, Col } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
@@ -16,6 +16,154 @@ const Login = ({ onLogin }) => {
     setUserType(type);
     setShowForm(true);
   };
+  
+  // Initialize with detailed sample trains if none exist
+  React.useEffect(() => {
+    const trains = localStorage.getItem('kmrl_trains');
+    if (!trains) {
+      const sampleTrains = [
+        { 
+          id: 1, 
+          trainNumber: 'KMRL-001', 
+          model: 'Metro-A1', 
+          status: 'Available', 
+          mileage: 45000, 
+          currentDepot: 'Aluva Depot',
+          healthScore: 85,
+          lastMaintenance: '2024-01-10',
+          nextMaintenance: '2024-02-15',
+          manufacturer: 'Alstom',
+          yearOfManufacture: 2017,
+          capacity: 1200,
+          maxSpeed: 80,
+          powerType: 'Electric',
+          airConditioning: 'Yes',
+          wifiEnabled: true,
+          cctv: 8,
+          emergencyBrakes: 'Functional',
+          doorSystem: 'Automatic',
+          totalServiceHours: 12500,
+          currentRoute: {
+            fromStation: 'Aluva',
+            toStation: 'Pettah',
+            routeDistance: '25.8 km',
+            estimatedTime: '45 min',
+            nextStation: 'Kalamassery'
+          },
+          fitnessCertificate: {
+            certificateNumber: 'FC-001-2024',
+            issuedDate: '2024-01-01',
+            expiryDate: '2025-01-01',
+            certifyingAuthority: 'Commissioner of Railway Safety (CRS)',
+            status: 'Valid',
+            lastInspectionDate: '2024-01-10',
+            nextInspectionDue: '2024-07-10'
+          },
+          brandingContract: {
+            companyName: 'Coca-Cola India',
+            contractedHours: 3000,
+            usedHours: 1250,
+            contractStartDate: '2024-01-01',
+            contractEndDate: '2024-12-31',
+            brandingType: 'Full Wrap'
+          }
+        },
+        { 
+          id: 2, 
+          trainNumber: 'KMRL-002', 
+          model: 'Metro-B2', 
+          status: 'Maintenance', 
+          mileage: 32000, 
+          currentDepot: 'Pettah Depot',
+          healthScore: 72,
+          lastMaintenance: '2024-01-05',
+          nextMaintenance: '2024-01-25',
+          manufacturer: 'BEML',
+          yearOfManufacture: 2018,
+          capacity: 1150,
+          maxSpeed: 80,
+          powerType: 'Electric',
+          airConditioning: 'Yes',
+          wifiEnabled: true,
+          cctv: 6,
+          emergencyBrakes: 'Under Maintenance',
+          doorSystem: 'Automatic',
+          totalServiceHours: 9800,
+          currentRoute: {
+            fromStation: 'Depot',
+            toStation: 'Maintenance Bay',
+            routeDistance: '0.5 km',
+            estimatedTime: '5 min',
+            nextStation: 'Maintenance Bay'
+          },
+          fitnessCertificate: {
+            certificateNumber: 'FC-002-2024',
+            issuedDate: '2024-01-01',
+            expiryDate: '2025-01-01',
+            certifyingAuthority: 'Commissioner of Railway Safety (CRS)',
+            status: 'Under Review',
+            lastInspectionDate: '2024-01-05',
+            nextInspectionDue: '2024-02-05'
+          },
+          brandingContract: {
+            companyName: 'No Active Contract',
+            contractedHours: 0,
+            usedHours: 0,
+            contractStartDate: 'N/A',
+            contractEndDate: 'N/A',
+            brandingType: 'None'
+          }
+        },
+        { 
+          id: 3, 
+          trainNumber: 'KMRL-003', 
+          model: 'Metro-A1', 
+          status: 'Available', 
+          mileage: 28000, 
+          currentDepot: 'Kalamassery Depot',
+          healthScore: 92,
+          lastMaintenance: '2024-01-15',
+          nextMaintenance: '2024-03-01',
+          manufacturer: 'Alstom',
+          yearOfManufacture: 2019,
+          capacity: 1200,
+          maxSpeed: 80,
+          powerType: 'Electric',
+          airConditioning: 'Yes',
+          wifiEnabled: true,
+          cctv: 8,
+          emergencyBrakes: 'Functional',
+          doorSystem: 'Automatic',
+          totalServiceHours: 8200,
+          currentRoute: {
+            fromStation: 'Kalamassery',
+            toStation: 'Aluva',
+            routeDistance: '15.2 km',
+            estimatedTime: '28 min',
+            nextStation: 'Pulinchodu'
+          },
+          fitnessCertificate: {
+            certificateNumber: 'FC-003-2024',
+            issuedDate: '2024-01-01',
+            expiryDate: '2025-01-01',
+            certifyingAuthority: 'Commissioner of Railway Safety (CRS)',
+            status: 'Valid',
+            lastInspectionDate: '2024-01-15',
+            nextInspectionDue: '2024-07-15'
+          },
+          brandingContract: {
+            companyName: 'Samsung Electronics',
+            contractedHours: 2500,
+            usedHours: 800,
+            contractStartDate: '2024-01-01',
+            contractEndDate: '2024-12-31',
+            brandingType: 'Side Panels'
+          }
+        }
+      ];
+      localStorage.setItem('kmrl_trains', JSON.stringify(sampleTrains));
+    }
+  }, []);
 
   const handleAuth = async () => {
     if (!email || !email.includes('@gmail.com')) {
@@ -33,61 +181,35 @@ const Login = ({ onLogin }) => {
       return;
     }
     
-    // Validate password for new users
-    if (userType === 'new') {
-      if (password.length < 6) {
-        message.error('Password must be at least 6 characters long');
-        return;
-      }
-      
-      if (!/[A-Z]/.test(password)) {
-        message.error('Password must contain at least one uppercase letter');
-        return;
-      }
-      
-      if (!/[a-z]/.test(password)) {
-        message.error('Password must contain at least one lowercase letter');
-        return;
-      }
-      
-      if (!/[0-9]/.test(password)) {
-        message.error('Password must contain at least one number');
-        return;
-      }
-    }
-    
     setLoading(true);
     
-    try {
-      const endpoint = userType === 'existing' ? '/api/auth/login' : '/api/auth/register';
-      const payload = userType === 'existing' ? 
-        { email, password } : 
-        { email, name, password };
+    // Mock authentication with localStorage
+    setTimeout(() => {
+      const users = JSON.parse(localStorage.getItem('kmrl_users') || '{}');
       
-      const response = await fetch(`http://localhost:8085${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        localStorage.setItem('kmrl_auth', 'true');
-        localStorage.setItem('kmrl_user_email', email);
-        message.success(userType === 'existing' ? 'Login successful!' : 'Registration successful!');
-        onLogin(true);
+      if (userType === 'existing') {
+        if (users[email] && users[email].password === password) {
+          localStorage.setItem('kmrl_auth', 'true');
+          localStorage.setItem('kmrl_user_email', email);
+          message.success('Login successful!');
+          onLogin(true);
+        } else {
+          message.error('Invalid email or password');
+        }
       } else {
-        message.error(data.message || 'Authentication failed');
+        if (users[email]) {
+          message.error('User already exists. Please login.');
+        } else {
+          users[email] = { name, password };
+          localStorage.setItem('kmrl_users', JSON.stringify(users));
+          localStorage.setItem('kmrl_auth', 'true');
+          localStorage.setItem('kmrl_user_email', email);
+          message.success('Registration successful!');
+          onLogin(true);
+        }
       }
-    } catch (error) {
-      console.error('Auth error:', error);
-      message.error('Authentication failed. Please check your connection.');
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (
@@ -118,10 +240,19 @@ const Login = ({ onLogin }) => {
           }}></div>
           <div style={{ textAlign: 'center', zIndex: 1, color: 'white' }}>
             <div style={{ 
-              fontSize: '80px', 
               marginBottom: '2rem',
-              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
-            }}>🚊</div>
+              filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))'
+            }}>
+              <img 
+                src="/metro-train.svg" 
+                alt="KMRL Metro Train" 
+                style={{
+                  width: '90px',
+                  height: '90px',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
             <h1 style={{ 
               fontSize: '3rem',
               fontWeight: '700',
@@ -220,7 +351,7 @@ const Login = ({ onLogin }) => {
                     onMouseEnter={(e) => e.target.style.background = '#166b5f'}
                     onMouseLeave={(e) => e.target.style.background = '#1a7f72'}
                   >
-                    🔐 Existing User Login
+                    Existing User Login
                   </Button>
                   
                   <Button 
@@ -245,7 +376,7 @@ const Login = ({ onLogin }) => {
                       e.target.style.color = '#1a7f72';
                     }}
                   >
-                    📝 New User Registration
+                    New User Registration
                   </Button>
                 </div>
               ) : (
@@ -364,7 +495,7 @@ const Login = ({ onLogin }) => {
                   fontSize: '0.8rem', 
                   fontWeight: '500' 
                 }}>
-                  {userType === 'new' ? '📝 New User Registration' : '🔐 Existing User Login'}
+                  {userType === 'new' ? 'New User Registration' : 'Existing User Login'}
                 </Text>
                 <br />
                 <Text style={{ fontSize: '0.7rem', color: '#6b7280' }}>

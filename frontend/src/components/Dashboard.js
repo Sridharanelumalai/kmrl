@@ -24,7 +24,6 @@ const Dashboard = () => {
       // Handle Spring Boot response format
       const data = response.data.data || response.data;
       setDashboardData(data);
-      message.success('Backend connected successfully!');
     } catch (error) {
       console.error('Dashboard error:', error);
       console.error('Error details:', error.response || error.message);
@@ -82,7 +81,8 @@ const Dashboard = () => {
       setTrainDetails(data);
     } catch (error) {
       console.error('Error fetching train details:', error);
-      message.error('Failed to load train details');
+      const mockTrains = JSON.parse(localStorage.getItem('kmrl_trains') || '[]');
+      setTrainDetails(mockTrains);
     } finally {
       setTrainLoading(false);
     }
@@ -339,7 +339,7 @@ const Dashboard = () => {
 
       {/* Fleet Metrics */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card 
             hoverable
             onClick={() => showTrainDetails('all', 'All Trains')}
@@ -361,7 +361,7 @@ const Dashboard = () => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card 
             hoverable
             onClick={() => showTrainDetails('available', 'Available Trains')}
@@ -383,7 +383,7 @@ const Dashboard = () => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
+        <Col xs={24} sm={12} md={8}>
           <Card 
             hoverable
             onClick={() => showTrainDetails('maintenance', 'Maintenance Due Trains')}
@@ -405,21 +405,7 @@ const Dashboard = () => {
             </div>
           </Card>
         </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card style={{ 
-            background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-            border: 'none',
-            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Fleet Availability</div>
-                <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.availability_percentage}%</div>
-              </div>
-              <div style={{ fontSize: '40px', opacity: 0.3 }}>📈</div>
-            </div>
-          </Card>
-        </Col>
+
       </Row>
 
 
@@ -536,9 +522,9 @@ const Dashboard = () => {
           columns={[
             {
               title: 'Train Number',
-              dataIndex: 'train_number',
-              key: 'train_number',
-              render: (number) => <strong style={{ color: '#1a7f72' }}>{number}</strong>
+              dataIndex: 'trainNumber',
+              key: 'trainNumber',
+              render: (number) => <strong style={{ color: '#1a7f72' }}>{number || 'N/A'}</strong>
             },
             {
               title: 'Status',
@@ -547,50 +533,139 @@ const Dashboard = () => {
               render: (status) => {
                 const color = status === 'Available' ? 'green' : 
                              status === 'In Service' ? 'blue' : 'orange';
-                return <Tag color={color}>{status.toUpperCase()}</Tag>;
+                return <Tag color={color}>{(status || 'Unknown').toUpperCase()}</Tag>;
               }
             },
             {
               title: 'Current Depot',
-              dataIndex: 'current_depot',
-              key: 'current_depot'
+              dataIndex: 'currentDepot',
+              key: 'currentDepot',
+              render: (depot) => depot || 'N/A'
             },
             {
               title: 'Mileage',
               dataIndex: 'mileage',
               key: 'mileage',
-              render: (mileage) => `${mileage.toLocaleString()} km`
+              render: (mileage) => `${(mileage || 0).toLocaleString()} km`
             },
             {
-              title: 'Health Score',
-              dataIndex: 'health_score',
-              key: 'health_score',
-              render: (score) => (
-                <div>
-                  <Progress 
-                    percent={score} 
-                    size="small" 
-                    status={score > 80 ? 'success' : score > 60 ? 'active' : 'exception'}
-                    format={(percent) => `${percent}%`}
-                  />
-                </div>
+              title: 'Model',
+              dataIndex: 'model',
+              key: 'model',
+              render: (model) => model || 'N/A'
+            },
+            {
+              title: 'Actions',
+              key: 'actions',
+              render: (_, record) => (
+                <Button 
+                  size="small" 
+                  onClick={() => {
+                    Modal.info({
+                      title: `Train Details - ${record.trainNumber}`,
+                      width: 800,
+                      content: (
+                        <div style={{ marginTop: 16 }}>
+                          <Row gutter={[16, 16]}>
+                            <Col span={12}>
+                              <Card title="Basic Information" size="small">
+                                <p><strong>Model:</strong> {record.model}</p>
+                                <p><strong>Manufacturer:</strong> {record.manufacturer || 'N/A'}</p>
+                                <p><strong>Year:</strong> {record.yearOfManufacture || 'N/A'}</p>
+                                <p><strong>Capacity:</strong> {record.capacity || 'N/A'} passengers</p>
+                                <p><strong>Max Speed:</strong> {record.maxSpeed || 'N/A'} km/h</p>
+                                <p><strong>Power Type:</strong> {record.powerType || 'Electric'}</p>
+                              </Card>
+                            </Col>
+                            <Col span={12}>
+                              <Card title="Operational Status" size="small">
+                                <p><strong>Current Status:</strong> <Tag color={record.status === 'Available' ? 'green' : 'orange'}>{record.status}</Tag></p>
+                                <p><strong>Health Score:</strong> {record.healthScore || 100}%</p>
+                                <p><strong>Total Mileage:</strong> {record.mileage?.toLocaleString()} km</p>
+                                <p><strong>Service Hours:</strong> {record.totalServiceHours?.toLocaleString() || 'N/A'} hrs</p>
+                                <p><strong>Current Depot:</strong> {record.currentDepot}</p>
+                              </Card>
+                            </Col>
+                            <Col span={12}>
+                              <Card title="Maintenance" size="small">
+                                <p><strong>Last Maintenance:</strong> {record.lastMaintenance || 'N/A'}</p>
+                                <p><strong>Next Maintenance:</strong> {record.nextMaintenance || 'N/A'}</p>
+                                <p><strong>Emergency Brakes:</strong> {record.emergencyBrakes || 'Functional'}</p>
+                              </Card>
+                            </Col>
+                            <Col span={12}>
+                              <Card title="Features" size="small">
+                                <p><strong>Air Conditioning:</strong> {record.airConditioning || 'Yes'}</p>
+                                <p><strong>WiFi:</strong> {record.wifiEnabled ? 'Yes' : 'No'}</p>
+                                <p><strong>CCTV Cameras:</strong> {record.cctv || 'N/A'}</p>
+                                <p><strong>Door System:</strong> {record.doorSystem || 'Automatic'}</p>
+                              </Card>
+                            </Col>
+                            <Col span={24}>
+                              <Card title="Current Route Information" size="small">
+                                <Row gutter={16}>
+                                  <Col span={6}>
+                                    <p><strong>From:</strong> {record.currentRoute?.fromStation || 'N/A'}</p>
+                                  </Col>
+                                  <Col span={6}>
+                                    <p><strong>To:</strong> {record.currentRoute?.toStation || 'N/A'}</p>
+                                  </Col>
+                                  <Col span={6}>
+                                    <p><strong>Distance:</strong> {record.currentRoute?.routeDistance || 'N/A'}</p>
+                                  </Col>
+                                  <Col span={6}>
+                                    <p><strong>Est. Time:</strong> {record.currentRoute?.estimatedTime || 'N/A'}</p>
+                                  </Col>
+                                </Row>
+                                <p><strong>Next Station:</strong> {record.currentRoute?.nextStation || 'N/A'}</p>
+                              </Card>
+                            </Col>
+                            <Col span={24}>
+                              <Card title="Fitness Certificate" size="small">
+                                <Row gutter={16}>
+                                  <Col span={8}>
+                                    <p><strong>Certificate No:</strong> {record.fitnessCertificate?.certificateNumber || 'N/A'}</p>
+                                    <p><strong>Status:</strong> <Tag color={record.fitnessCertificate?.status === 'Valid' ? 'green' : record.fitnessCertificate?.status === 'Under Review' ? 'orange' : 'red'}>{record.fitnessCertificate?.status || 'N/A'}</Tag></p>
+                                  </Col>
+                                  <Col span={8}>
+                                    <p><strong>Issued Date:</strong> {record.fitnessCertificate?.issuedDate || 'N/A'}</p>
+                                    <p><strong>Expiry Date:</strong> {record.fitnessCertificate?.expiryDate || 'N/A'}</p>
+                                  </Col>
+                                  <Col span={8}>
+                                    <p><strong>Last Inspection:</strong> {record.fitnessCertificate?.lastInspectionDate || 'N/A'}</p>
+                                    <p><strong>Next Inspection:</strong> {record.fitnessCertificate?.nextInspectionDue || 'N/A'}</p>
+                                  </Col>
+                                </Row>
+                                <p><strong>Certifying Authority:</strong> {record.fitnessCertificate?.certifyingAuthority || 'N/A'}</p>
+                              </Card>
+                            </Col>
+                            <Col span={24}>
+                              <Card title="Branding Contract" size="small">
+                                <Row gutter={16}>
+                                  <Col span={8}>
+                                    <p><strong>Company:</strong> {record.brandingContract?.companyName || 'N/A'}</p>
+                                    <p><strong>Branding Type:</strong> {record.brandingContract?.brandingType || 'N/A'}</p>
+                                  </Col>
+                                  <Col span={8}>
+                                    <p><strong>Contracted Hours:</strong> {record.brandingContract?.contractedHours?.toLocaleString() || 'N/A'} hrs</p>
+                                    <p><strong>Used Hours:</strong> {record.brandingContract?.usedHours?.toLocaleString() || 'N/A'} hrs</p>
+                                  </Col>
+                                  <Col span={8}>
+                                    <p><strong>Contract Period:</strong> {record.brandingContract?.contractStartDate || 'N/A'} to {record.brandingContract?.contractEndDate || 'N/A'}</p>
+                                    <p><strong>Remaining Hours:</strong> {record.brandingContract?.contractedHours && record.brandingContract?.usedHours ? (record.brandingContract.contractedHours - record.brandingContract.usedHours).toLocaleString() : 'N/A'} hrs</p>
+                                  </Col>
+                                </Row>
+                              </Card>
+                            </Col>
+                          </Row>
+                        </div>
+                      )
+                    });
+                  }}
+                >
+                  View Details
+                </Button>
               )
-            },
-            {
-              title: 'Priority',
-              dataIndex: 'priority',
-              key: 'priority',
-              render: (priority) => {
-                const color = priority === 'Critical' ? 'red' : 
-                             priority === 'Warning' ? 'orange' : 'green';
-                return <Tag color={color}>{priority.toUpperCase()}</Tag>;
-              }
-            },
-            {
-              title: 'Last Maintenance',
-              dataIndex: 'last_maintenance',
-              key: 'last_maintenance',
-              render: (date) => moment(date).format('MMM DD, YYYY')
             }
           ]}
           pagination={{ pageSize: 10 }}

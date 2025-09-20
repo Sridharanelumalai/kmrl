@@ -98,10 +98,14 @@ const TrainManagement = () => {
   const handleCreateTrain = async (values) => {
     try {
       const response = await trainService.createTrain(values);
-      message.success('Train created successfully');
-      setModalVisible(false);
-      form.resetFields();
-      fetchTrains();
+      if (response.data.success) {
+        message.success('Train created successfully');
+        setModalVisible(false);
+        form.resetFields();
+        fetchTrains();
+      } else {
+        message.error(response.data.message || 'Failed to create train');
+      }
     } catch (error) {
       console.error('Create train error:', error);
       message.error('Failed to create train');
@@ -112,6 +116,109 @@ const TrainManagement = () => {
     setSelectedTrain(train);
     await fetchTrainDetails(train.id);
     setDetailModalVisible(true);
+  };
+
+  const showTrainDetailsModal = (train) => {
+    Modal.info({
+      title: `Train Details - ${train.trainNumber}`,
+      width: 800,
+      content: (
+        <div style={{ marginTop: 16 }}>
+          <Row gutter={[16, 16]}>
+            <Col span={12}>
+              <Card title="Basic Information" size="small">
+                <p><strong>Model:</strong> {train.model}</p>
+                <p><strong>Manufacturer:</strong> {train.manufacturer || 'N/A'}</p>
+                <p><strong>Year:</strong> {train.yearOfManufacture || 'N/A'}</p>
+                <p><strong>Capacity:</strong> {train.capacity || 'N/A'} passengers</p>
+                <p><strong>Max Speed:</strong> {train.maxSpeed || 'N/A'} km/h</p>
+                <p><strong>Power Type:</strong> {train.powerType || 'Electric'}</p>
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="Operational Status" size="small">
+                <p><strong>Current Status:</strong> <Tag color={train.status === 'Available' ? 'green' : 'orange'}>{train.status}</Tag></p>
+                <p><strong>Health Score:</strong> {train.healthScore || 100}%</p>
+                <p><strong>Total Mileage:</strong> {train.mileage?.toLocaleString()} km</p>
+                <p><strong>Service Hours:</strong> {train.totalServiceHours?.toLocaleString() || 'N/A'} hrs</p>
+                <p><strong>Current Depot:</strong> {train.currentDepot}</p>
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="Maintenance" size="small">
+                <p><strong>Last Maintenance:</strong> {train.lastMaintenance || 'N/A'}</p>
+                <p><strong>Next Maintenance:</strong> {train.nextMaintenance || 'N/A'}</p>
+                <p><strong>Emergency Brakes:</strong> {train.emergencyBrakes || 'Functional'}</p>
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="Features" size="small">
+                <p><strong>Air Conditioning:</strong> {train.airConditioning || 'Yes'}</p>
+                <p><strong>WiFi:</strong> {train.wifiEnabled ? 'Yes' : 'No'}</p>
+                <p><strong>CCTV Cameras:</strong> {train.cctv || 'N/A'}</p>
+                <p><strong>Door System:</strong> {train.doorSystem || 'Automatic'}</p>
+              </Card>
+            </Col>
+            <Col span={24}>
+              <Card title="Current Route Information" size="small">
+                <Row gutter={16}>
+                  <Col span={6}>
+                    <p><strong>From:</strong> {train.currentRoute?.fromStation || 'N/A'}</p>
+                  </Col>
+                  <Col span={6}>
+                    <p><strong>To:</strong> {train.currentRoute?.toStation || 'N/A'}</p>
+                  </Col>
+                  <Col span={6}>
+                    <p><strong>Distance:</strong> {train.currentRoute?.routeDistance || 'N/A'}</p>
+                  </Col>
+                  <Col span={6}>
+                    <p><strong>Est. Time:</strong> {train.currentRoute?.estimatedTime || 'N/A'}</p>
+                  </Col>
+                </Row>
+                <p><strong>Next Station:</strong> {train.currentRoute?.nextStation || 'N/A'}</p>
+              </Card>
+            </Col>
+            <Col span={24}>
+              <Card title="Fitness Certificate" size="small">
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <p><strong>Certificate No:</strong> {train.fitnessCertificate?.certificateNumber || 'N/A'}</p>
+                    <p><strong>Status:</strong> <Tag color={train.fitnessCertificate?.status === 'Valid' ? 'green' : train.fitnessCertificate?.status === 'Under Review' ? 'orange' : 'red'}>{train.fitnessCertificate?.status || 'N/A'}</Tag></p>
+                  </Col>
+                  <Col span={8}>
+                    <p><strong>Issued Date:</strong> {train.fitnessCertificate?.issuedDate || 'N/A'}</p>
+                    <p><strong>Expiry Date:</strong> {train.fitnessCertificate?.expiryDate || 'N/A'}</p>
+                  </Col>
+                  <Col span={8}>
+                    <p><strong>Last Inspection:</strong> {train.fitnessCertificate?.lastInspectionDate || 'N/A'}</p>
+                    <p><strong>Next Inspection:</strong> {train.fitnessCertificate?.nextInspectionDue || 'N/A'}</p>
+                  </Col>
+                </Row>
+                <p><strong>Certifying Authority:</strong> {train.fitnessCertificate?.certifyingAuthority || 'N/A'}</p>
+              </Card>
+            </Col>
+            <Col span={24}>
+              <Card title="Branding Contract" size="small">
+                <Row gutter={16}>
+                  <Col span={8}>
+                    <p><strong>Company:</strong> {train.brandingContract?.companyName || 'N/A'}</p>
+                    <p><strong>Branding Type:</strong> {train.brandingContract?.brandingType || 'N/A'}</p>
+                  </Col>
+                  <Col span={8}>
+                    <p><strong>Contracted Hours:</strong> {train.brandingContract?.contractedHours?.toLocaleString() || 'N/A'} hrs</p>
+                    <p><strong>Used Hours:</strong> {train.brandingContract?.usedHours?.toLocaleString() || 'N/A'} hrs</p>
+                  </Col>
+                  <Col span={8}>
+                    <p><strong>Contract Period:</strong> {train.brandingContract?.contractStartDate || 'N/A'} to {train.brandingContract?.contractEndDate || 'N/A'}</p>
+                    <p><strong>Remaining Hours:</strong> {train.brandingContract?.contractedHours && train.brandingContract?.usedHours ? (train.brandingContract.contractedHours - train.brandingContract.usedHours).toLocaleString() : 'N/A'} hrs</p>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+      )
+    });
   };
 
   useEffect(() => {
@@ -131,9 +238,9 @@ const TrainManagement = () => {
   const columns = [
     {
       title: 'Train Number',
-      dataIndex: 'train_number',
-      key: 'train_number',
-      sorter: (a, b) => a.train_number.localeCompare(b.train_number),
+      dataIndex: 'trainNumber',
+      key: 'trainNumber',
+      sorter: (a, b) => (a.trainNumber || '').localeCompare(b.trainNumber || ''),
     },
     {
       title: 'Model',
@@ -171,11 +278,55 @@ const TrainManagement = () => {
         <Button.Group>
           <Button 
             icon={<EyeOutlined />} 
-            onClick={() => showTrainDetails(record)}
+            onClick={() => showTrainDetailsModal(record)}
           >
             Details
           </Button>
-          <Button icon={<ToolOutlined />}>
+          <Button 
+            icon={<ToolOutlined />}
+            onClick={() => {
+              Modal.info({
+                title: `Maintenance Schedule - ${record.trainNumber}`,
+                width: 700,
+                content: (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ marginBottom: 16, padding: 12, background: '#f0f9ff', borderRadius: 8 }}>
+                      <strong>Current Status:</strong> {record.status}
+                    </div>
+                    <Table
+                      size="small"
+                      dataSource={[
+                        {
+                          id: 1,
+                          type: 'Scheduled',
+                          description: 'Regular maintenance check',
+                          date: record.nextMaintenance || '2024-02-15',
+                          status: 'Pending',
+                          cost: '₹15,000'
+                        },
+                        {
+                          id: 2,
+                          type: 'Completed',
+                          description: 'Brake system inspection',
+                          date: record.lastMaintenance || '2024-01-10',
+                          status: 'Completed',
+                          cost: '₹8,500'
+                        }
+                      ]}
+                      columns={[
+                        { title: 'Type', dataIndex: 'type', key: 'type' },
+                        { title: 'Description', dataIndex: 'description', key: 'description' },
+                        { title: 'Date', dataIndex: 'date', key: 'date' },
+                        { title: 'Status', dataIndex: 'status', key: 'status', render: (status) => <Tag color={status === 'Completed' ? 'green' : 'orange'}>{status}</Tag> },
+                        { title: 'Cost', dataIndex: 'cost', key: 'cost' }
+                      ]}
+                      pagination={false}
+                    />
+                  </div>
+                )
+              });
+            }}
+          >
             Maintenance
           </Button>
         </Button.Group>

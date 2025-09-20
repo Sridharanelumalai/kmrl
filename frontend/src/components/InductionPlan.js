@@ -25,7 +25,6 @@ const InductionPlan = () => {
       // Handle backend response format
       const data = response.data.data || response.data;
       setInductionPlan(data);
-      message.success('Induction plan generated successfully');
     } catch (error) {
       console.error('Plan generation error:', error);
       // Use mock data when backend is not available
