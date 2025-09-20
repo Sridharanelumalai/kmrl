@@ -16,6 +16,9 @@ public class User {
     @Column(nullable = false)
     private String name;
     
+    @Column(nullable = false)
+    private String password;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -27,9 +30,10 @@ public class User {
     
     public User() {}
     
-    public User(String email, String name) {
+    public User(String email, String name, String password) {
         this.email = email;
         this.name = name;
+        this.password = password;
         this.createdAt = LocalDateTime.now();
         this.isActive = true;
     }
@@ -43,6 +47,9 @@ public class User {
     
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

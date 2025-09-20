@@ -1,82 +1,70 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Card, message, Typography, Row, Col } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import { sendOTPEmail } from '../services/emailService';
+import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
 const Login = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpLoading, setOtpLoading] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
-
-  const [isRegistered, setIsRegistered] = useState(null);
   const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [userType, setUserType] = useState(null); // 'new' or 'existing'
+  const [showForm, setShowForm] = useState(false);
 
-  const sendOTP = async () => {
+  const selectUserType = (type) => {
+    setUserType(type);
+    setShowForm(true);
+  };
+
+  const handleAuth = async () => {
     if (!email || !email.includes('@gmail.com')) {
       message.error('Please enter a valid Gmail address');
       return;
     }
     
-    setOtpLoading(true);
+    if (userType === 'new' && !name) {
+      message.error('Please enter your name');
+      return;
+    }
     
-    try {
-      const response = await fetch('http://localhost:8080/api/auth/send-otp', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, name })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setOtpSent(true);
-        setIsRegistered(data.isRegistered);
-        message.success(`OTP sent to ${email}. Please check your Gmail inbox.`);
-        
-        setResendTimer(60);
-        const countdown = setInterval(() => {
-          setResendTimer(prev => {
-            if (prev <= 1) {
-              clearInterval(countdown);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      } else {
-        message.error(data.message || 'Failed to send OTP');
+    if (!password) {
+      message.error('Please enter your password');
+      return;
+    }
+    
+    // Validate password for new users
+    if (userType === 'new') {
+      if (password.length < 6) {
+        message.error('Password must be at least 6 characters long');
+        return;
       }
       
-    } catch (error) {
-      console.error('OTP send error:', error);
-      message.error('Failed to send OTP. Please check your connection.');
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const onFinish = async (values) => {
-    if (!otpSent) {
-      message.error('Please verify your email first');
-      return;
+      if (!/[A-Z]/.test(password)) {
+        message.error('Password must contain at least one uppercase letter');
+        return;
+      }
+      
+      if (!/[a-z]/.test(password)) {
+        message.error('Password must contain at least one lowercase letter');
+        return;
+      }
+      
+      if (!/[0-9]/.test(password)) {
+        message.error('Password must contain at least one number');
+        return;
+      }
     }
     
     setLoading(true);
     
     try {
-      const endpoint = isRegistered ? '/api/auth/login' : '/api/auth/register';
-      const payload = isRegistered ? 
-        { email, otp } : 
-        { email, name: values.name || name, otp };
+      const endpoint = userType === 'existing' ? '/api/auth/login' : '/api/auth/register';
+      const payload = userType === 'existing' ? 
+        { email, password } : 
+        { email, name, password };
       
-      const response = await fetch(`http://localhost:8080${endpoint}`, {
+      const response = await fetch(`http://localhost:8085${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,11 +77,10 @@ const Login = ({ onLogin }) => {
       if (data.success) {
         localStorage.setItem('kmrl_auth', 'true');
         localStorage.setItem('kmrl_user_email', email);
-        message.success(isRegistered ? 'Login successful!' : 'Registration successful!');
+        message.success(userType === 'existing' ? 'Login successful!' : 'Registration successful!');
         onLogin(true);
       } else {
         message.error(data.message || 'Authentication failed');
-        setOtp('');
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -197,8 +184,8 @@ const Login = ({ onLogin }) => {
                 color: '#1a7f72',
                 marginBottom: '0.5rem'
               }}>
-                {otpSent ? 
-                  (isRegistered === false ? 'Create Account' : 'Welcome Back') : 
+                {showForm ? 
+                  (userType === 'new' ? 'Create Account' : 'Welcome Back') : 
                   'KMRL Login'
                 }
               </h2>
@@ -206,58 +193,26 @@ const Login = ({ onLogin }) => {
                 color: '#6b7280',
                 fontSize: '0.9rem'
               }}>
-                {otpSent ? 
-                  (isRegistered === false ? 'Complete your registration' : 'Sign in to your account') : 
-                  'Enter your Gmail to continue'
+                {showForm ? 
+                  (userType === 'new' ? 'Complete your registration' : 'Sign in to your account') : 
+                  'Choose your login type'
                 }
               </p>
             </div>
 
-            <Form
-              name="login"
-              onFinish={onFinish}
-              autoComplete="off"
-              size="large"
-              style={{ marginBottom: '1.5rem' }}
-            >
-              <Form.Item
-                name="email"
-                rules={[
-                  { required: true, message: 'Please input your email!' },
-                  { type: 'email', message: 'Please enter a valid email!' }
-                ]}
-              >
-                <Input 
-                  prefix={<MailOutlined style={{ color: '#1a7f72' }} />} 
-                  placeholder="Enter your email address"
-                  style={{ 
-                    borderRadius: '1rem',
-                    padding: '0.75rem 1rem',
-                    border: '2px solid #e5e7eb',
-                    fontSize: '1rem',
-                    transition: 'all 0.3s ease'
-                  }}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={otpSent}
-                  onFocus={(e) => e.target.style.borderColor = '#1a7f72'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-                />
-              </Form.Item>
-
-              {!otpSent ? (
-                <Form.Item>
+            <div style={{ marginBottom: '1.5rem' }}>
+              {!showForm ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <Button 
                     type="primary" 
-                    loading={otpLoading}
-                    onClick={sendOTP}
+                    onClick={() => selectUserType('existing')}
                     style={{ 
                       width: '100%',
-                      height: '3rem',
+                      height: '3.5rem',
                       borderRadius: '1rem',
                       background: '#1a7f72',
                       border: 'none',
-                      fontSize: '1rem',
+                      fontSize: '1.1rem',
                       fontWeight: '600',
                       boxShadow: '0 4px 12px rgba(26, 127, 114, 0.3)',
                       transition: 'all 0.3s ease'
@@ -265,17 +220,56 @@ const Login = ({ onLogin }) => {
                     onMouseEnter={(e) => e.target.style.background = '#166b5f'}
                     onMouseLeave={(e) => e.target.style.background = '#1a7f72'}
                   >
-                    {otpLoading ? 'Sending OTP...' : 'Send OTP to Email'}
+                    🔐 Existing User Login
                   </Button>
-                </Form.Item>
+                  
+                  <Button 
+                    onClick={() => selectUserType('new')}
+                    style={{ 
+                      width: '100%',
+                      height: '3.5rem',
+                      borderRadius: '1rem',
+                      background: 'white',
+                      border: '2px solid #1a7f72',
+                      color: '#1a7f72',
+                      fontSize: '1.1rem',
+                      fontWeight: '600',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#1a7f72';
+                      e.target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'white';
+                      e.target.style.color = '#1a7f72';
+                    }}
+                  >
+                    📝 New User Registration
+                  </Button>
+                </div>
               ) : (
                 <>
-                  {/* Show name field only for new users */}
-                  {isRegistered === false && (
-                    <Form.Item
-                      name="name"
-                      rules={[{ required: true, message: 'Please enter your name!' }]}
-                    >
+                  <div style={{ marginBottom: '1rem' }}>
+                    <Input 
+                      prefix={<MailOutlined style={{ color: '#1a7f72' }} />} 
+                      placeholder="Enter your email address"
+                      style={{ 
+                        borderRadius: '1rem',
+                        padding: '0.75rem 1rem',
+                        border: '2px solid #e5e7eb',
+                        fontSize: '1rem',
+                        transition: 'all 0.3s ease'
+                      }}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onFocus={(e) => e.target.style.borderColor = '#1a7f72'}
+                      onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                    />
+                  </div>
+
+                  {userType === 'new' && (
+                    <div style={{ marginBottom: '1rem' }}>
                       <Input 
                         prefix={<UserOutlined style={{ color: '#1a7f72' }} />} 
                         placeholder="Enter your full name"
@@ -291,39 +285,53 @@ const Login = ({ onLogin }) => {
                         onFocus={(e) => e.target.style.borderColor = '#1a7f72'}
                         onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                       />
-                    </Form.Item>
+                    </div>
                   )}
                   
-                  <Form.Item
-                    name="otp"
-                    rules={[{ required: true, message: 'Please input the OTP!' }]}
-                  >
-                    <Input 
+                  <div style={{ marginBottom: '1rem' }}>
+                    <Input.Password 
                       prefix={<LockOutlined style={{ color: '#1a7f72' }} />} 
-                      placeholder="Enter 6-digit OTP"
+                      placeholder={userType === 'new' ? 'Create a strong password (6+ chars, A-z, 0-9)' : 'Enter your password'}
                       style={{ 
                         borderRadius: '1rem',
                         padding: '0.75rem 1rem',
                         border: '2px solid #e5e7eb',
                         fontSize: '1rem',
-                        letterSpacing: '2px',
                         transition: 'all 0.3s ease'
                       }}
-                      maxLength={6}
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       onFocus={(e) => e.target.style.borderColor = '#1a7f72'}
                       onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                     />
-                  </Form.Item>
-
-                  <Form.Item>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <Button 
+                      onClick={() => {
+                        setShowForm(false);
+                        setUserType(null);
+                        setEmail('');
+                        setName('');
+                        setPassword('');
+                      }}
+                      style={{ 
+                        height: '3rem',
+                        borderRadius: '1rem',
+                        border: '2px solid #e5e7eb',
+                        fontSize: '1rem',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Back
+                    </Button>
+                    
                     <Button 
                       type="primary" 
-                      htmlType="submit" 
                       loading={loading}
+                      onClick={handleAuth}
                       style={{ 
-                        width: '100%',
+                        flex: 1,
                         height: '3rem',
                         borderRadius: '1rem',
                         background: '#1a7f72',
@@ -336,66 +344,33 @@ const Login = ({ onLogin }) => {
                       onMouseEnter={(e) => e.target.style.background = '#166b5f'}
                       onMouseLeave={(e) => e.target.style.background = '#1a7f72'}
                     >
-                      {loading ? 
-                        (isRegistered === false ? 'Registering...' : 'Logging in...') : 
-                        (isRegistered === false ? 'Register & Login' : 'Verify & Login')
-                      }
+                      {loading ? (userType === 'existing' ? 'Logging in...' : 'Registering...') : (userType === 'existing' ? 'Login' : 'Register')}
                     </Button>
-                  </Form.Item>
-                  
-                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                    <Row gutter={16}>
-                      <Col span={12}>
-                        <Button 
-                          type="link" 
-                          onClick={() => {
-                            setOtpSent(false);
-                            setOtp('');
-                            setEmail('');
-                            setResendTimer(0);
-                          }}
-                          style={{ fontSize: '0.8rem', width: '100%', color: '#1a7f72' }}
-                        >
-                          Change Email
-                        </Button>
-                      </Col>
-                      <Col span={12}>
-                        <Button 
-                          type="link" 
-                          onClick={sendOTP}
-                          disabled={resendTimer > 0 || otpLoading}
-                          loading={otpLoading}
-                          style={{ fontSize: '0.8rem', width: '100%', color: resendTimer > 0 ? '#9ca3af' : '#1a7f72' }}
-                        >
-                          {resendTimer > 0 ? `Resend (${resendTimer}s)` : 'Resend OTP'}
-                        </Button>
-                      </Col>
-                    </Row>
                   </div>
                 </>
               )}
-            </Form>
+            </div>
             
-            {otpSent && (
+            {showForm && (
               <div style={{ 
                 textAlign: 'center', 
                 padding: '1rem',
-                background: isRegistered === false ? '#fef3c7' : '#f0fdf4',
+                background: userType === 'new' ? '#fef3c7' : '#f0fdf4',
                 borderRadius: '1rem',
-                border: isRegistered === false ? '1px solid #fbbf24' : '1px solid #bbf7d0'
+                border: userType === 'new' ? '1px solid #fbbf24' : '1px solid #bbf7d0'
               }}>
                 <Text style={{ 
-                  color: isRegistered === false ? '#d97706' : '#16a34a', 
+                  color: userType === 'new' ? '#d97706' : '#16a34a', 
                   fontSize: '0.8rem', 
                   fontWeight: '500' 
                 }}>
-                  {isRegistered === false ? '📝 New User Registration' : '🔐 Existing User Login'}
+                  {userType === 'new' ? '📝 New User Registration' : '🔐 Existing User Login'}
                 </Text>
                 <br />
                 <Text style={{ fontSize: '0.7rem', color: '#6b7280' }}>
-                  {isRegistered === false ? 
-                    'Please enter your name and verify OTP to register' : 
-                    'Enter OTP to login to your account'
+                  {userType === 'new' ? 
+                    'Password must be 6+ characters with uppercase, lowercase & number' : 
+                    'Enter your email and password to login'
                   }
                 </Text>
               </div>
