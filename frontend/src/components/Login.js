@@ -43,13 +43,6 @@ const Login = ({ onLogin }) => {
           emergencyBrakes: 'Functional',
           doorSystem: 'Automatic',
           totalServiceHours: 12500,
-          currentRoute: {
-            fromStation: 'Aluva',
-            toStation: 'Pettah',
-            routeDistance: '25.8 km',
-            estimatedTime: '45 min',
-            nextStation: 'Kalamassery'
-          },
           fitnessCertificate: {
             certificateNumber: 'FC-001-2024',
             issuedDate: '2024-01-01',
@@ -89,13 +82,6 @@ const Login = ({ onLogin }) => {
           emergencyBrakes: 'Under Maintenance',
           doorSystem: 'Automatic',
           totalServiceHours: 9800,
-          currentRoute: {
-            fromStation: 'Depot',
-            toStation: 'Maintenance Bay',
-            routeDistance: '0.5 km',
-            estimatedTime: '5 min',
-            nextStation: 'Maintenance Bay'
-          },
           fitnessCertificate: {
             certificateNumber: 'FC-002-2024',
             issuedDate: '2024-01-01',
@@ -135,13 +121,6 @@ const Login = ({ onLogin }) => {
           emergencyBrakes: 'Functional',
           doorSystem: 'Automatic',
           totalServiceHours: 8200,
-          currentRoute: {
-            fromStation: 'Kalamassery',
-            toStation: 'Aluva',
-            routeDistance: '15.2 km',
-            estimatedTime: '28 min',
-            nextStation: 'Pulinchodu'
-          },
           fitnessCertificate: {
             certificateNumber: 'FC-003-2024',
             issuedDate: '2024-01-01',

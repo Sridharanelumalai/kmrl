@@ -160,25 +160,6 @@ const TrainManagement = () => {
               </Card>
             </Col>
             <Col span={24}>
-              <Card title="Current Route Information" size="small">
-                <Row gutter={16}>
-                  <Col span={6}>
-                    <p><strong>From:</strong> {train.currentRoute?.fromStation || 'N/A'}</p>
-                  </Col>
-                  <Col span={6}>
-                    <p><strong>To:</strong> {train.currentRoute?.toStation || 'N/A'}</p>
-                  </Col>
-                  <Col span={6}>
-                    <p><strong>Distance:</strong> {train.currentRoute?.routeDistance || 'N/A'}</p>
-                  </Col>
-                  <Col span={6}>
-                    <p><strong>Est. Time:</strong> {train.currentRoute?.estimatedTime || 'N/A'}</p>
-                  </Col>
-                </Row>
-                <p><strong>Next Station:</strong> {train.currentRoute?.nextStation || 'N/A'}</p>
-              </Card>
-            </Col>
-            <Col span={24}>
               <Card title="Fitness Certificate" size="small">
                 <Row gutter={16}>
                   <Col span={8}>

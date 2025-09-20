@@ -313,6 +313,11 @@ const Dashboard = () => {
                   <div>
                     <h2 style={{ color: 'white', margin: 0, fontSize: '28px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>KMRL Dashboard</h2>
                     <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', marginTop: '4px' }}>Real-time Train Operations Overview</div>
+                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginTop: '8px', display: 'flex', gap: '16px' }}>
+                      <span>🏭 Aluva: 80% (3 free)</span>
+                      <span>🏭 Pettah: 80% (2 free)</span>
+                      <span>🏭 Kalamassery: 75% (3 free)</span>
+                    </div>
                   </div>
                 </div>
               </Col>
@@ -419,33 +424,32 @@ const Dashboard = () => {
             }}
             title={
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ fontSize: '24px' }}>🏭</div>
+                <div style={{ fontSize: '24px' }}>🚊</div>
                 <div>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#059669' }}>Depot Status Details</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a7f72' }}>Current Induction Plan</div>
                   <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#666', marginTop: '2px' }}>
-                    Real-time maintenance facility capacity and workload distribution
+                    AI-generated train scheduling and maintenance optimization
                   </div>
                 </div>
               </div>
             }
             extra={
-              <div style={{ 
-                fontSize: '11px', 
-                color: '#999',
-                background: '#f3f4f6',
-                padding: '4px 8px',
-                borderRadius: '4px'
-              }}>
-                🕒 Last updated: {moment().format('HH:mm:ss')} | Auto-refresh: 30s
-              </div>
+              <Button 
+                type="primary" 
+                size="small"
+                style={{ background: '#1a7f72', borderColor: '#1a7f72' }}
+                onClick={() => window.location.href = '/induction-plan'}
+              >
+                View Full Plan
+              </Button>
             }
           >
             <div style={{ 
               marginBottom: '16px', 
               padding: '16px', 
-              background: 'linear-gradient(135deg, #ecfdf5, #d1fae5)', 
+              background: 'linear-gradient(135deg, #f0f9ff, #dbeafe)', 
               borderRadius: '12px', 
-              border: '1px solid #a7f3d0',
+              border: '1px solid #93c5fd',
               position: 'relative',
               overflow: 'hidden'
             }}>
@@ -455,21 +459,79 @@ const Dashboard = () => {
                 right: '-10px',
                 fontSize: '60px',
                 opacity: 0.1
-              }}>💡</div>
-              <div style={{ fontSize: '13px', color: '#059669', lineHeight: '1.5' }}>
-                <strong>💡 Smart Scheduling Insight:</strong> This real-time data enables our AI system to optimize train scheduling by ensuring maintenance bays are available when needed. 
-                High utilization (>80%) may cause scheduling delays and requires intelligent load balancing across depots.
+              }}>🤖</div>
+              <div style={{ fontSize: '13px', color: '#1e40af', lineHeight: '1.5' }}>
+                <strong>🤖 AI Optimization:</strong> The system continuously analyzes train conditions, maintenance schedules, and depot capacity to generate optimal induction plans. 
+                High-priority trains are automatically scheduled based on mileage, sensor data, and safety requirements.
               </div>
             </div>
             <Table 
-              columns={depotColumns} 
-              dataSource={depot_utilization}
-              rowKey="name"
+              dataSource={[
+                {
+                  key: 1,
+                  train_number: 'KMRL-001',
+                  priority_score: 85.5,
+                  scheduled_date: moment().add(1, 'day').format('YYYY-MM-DD HH:mm'),
+                  depot: 'Aluva Depot',
+                  reasoning: 'High priority due to maintenance requirements; Approaching mileage limit (45000 km)'
+                },
+                {
+                  key: 2,
+                  train_number: 'KMRL-002',
+                  priority_score: 72.3,
+                  scheduled_date: moment().add(2, 'days').format('YYYY-MM-DD HH:mm'),
+                  depot: 'Pettah Depot',
+                  reasoning: 'Sensor anomalies detected; Scheduled maintenance required'
+                },
+                {
+                  key: 3,
+                  train_number: 'KMRL-003',
+                  priority_score: 58.1,
+                  scheduled_date: moment().add(3, 'days').format('YYYY-MM-DD HH:mm'),
+                  depot: 'Kalamassery Depot',
+                  reasoning: 'Regular maintenance due; Optimal scheduling window'
+                }
+              ]}
+              columns={[
+                {
+                  title: 'Train',
+                  dataIndex: 'train_number',
+                  key: 'train_number',
+                  render: (text) => <strong style={{ color: '#1a7f72' }}>{text}</strong>
+                },
+                {
+                  title: 'Priority',
+                  dataIndex: 'priority_score',
+                  key: 'priority_score',
+                  render: (score) => {
+                    const color = score >= 70 ? 'red' : score >= 40 ? 'orange' : 'green';
+                    const text = score >= 70 ? 'High' : score >= 40 ? 'Medium' : 'Low';
+                    return <Tag color={color}>{text} ({score})</Tag>;
+                  }
+                },
+                {
+                  title: 'Scheduled',
+                  dataIndex: 'scheduled_date',
+                  key: 'scheduled_date'
+                },
+                {
+                  title: 'Depot',
+                  dataIndex: 'depot',
+                  key: 'depot'
+                },
+                {
+                  title: 'Reasoning',
+                  dataIndex: 'reasoning',
+                  key: 'reasoning',
+                  ellipsis: true
+                }
+              ]}
               pagination={false}
             />
           </Card>
         </Col>
       </Row>
+
 
       {/* Anomaly Alert */}
       {anomaly_metrics.total_anomalies > 0 && (
@@ -599,25 +661,6 @@ const Dashboard = () => {
                                 <p><strong>WiFi:</strong> {record.wifiEnabled ? 'Yes' : 'No'}</p>
                                 <p><strong>CCTV Cameras:</strong> {record.cctv || 'N/A'}</p>
                                 <p><strong>Door System:</strong> {record.doorSystem || 'Automatic'}</p>
-                              </Card>
-                            </Col>
-                            <Col span={24}>
-                              <Card title="Current Route Information" size="small">
-                                <Row gutter={16}>
-                                  <Col span={6}>
-                                    <p><strong>From:</strong> {record.currentRoute?.fromStation || 'N/A'}</p>
-                                  </Col>
-                                  <Col span={6}>
-                                    <p><strong>To:</strong> {record.currentRoute?.toStation || 'N/A'}</p>
-                                  </Col>
-                                  <Col span={6}>
-                                    <p><strong>Distance:</strong> {record.currentRoute?.routeDistance || 'N/A'}</p>
-                                  </Col>
-                                  <Col span={6}>
-                                    <p><strong>Est. Time:</strong> {record.currentRoute?.estimatedTime || 'N/A'}</p>
-                                  </Col>
-                                </Row>
-                                <p><strong>Next Station:</strong> {record.currentRoute?.nextStation || 'N/A'}</p>
                               </Card>
                             </Col>
                             <Col span={24}>

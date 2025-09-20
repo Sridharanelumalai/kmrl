@@ -69,13 +69,6 @@ export const trainService = {
       emergencyBrakes: 'Functional',
       doorSystem: 'Automatic',
       totalServiceHours: 0,
-      currentRoute: {
-        fromStation: 'Aluva',
-        toStation: 'Pettah',
-        routeDistance: '25.8 km',
-        estimatedTime: '45 min',
-        nextStation: 'Kalamassery'
-      },
       fitnessCertificate: {
         certificateNumber: `FC-${Date.now().toString().slice(-6)}`,
         issuedDate: new Date().toISOString().split('T')[0],

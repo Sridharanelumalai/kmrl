@@ -360,43 +360,100 @@ const InductionPlan = () => {
               setSimulationResult(null);
             }}
           >
-            <Option value="train_breakdown">Train Breakdown</Option>
             <Option value="train_replacement">Train Replacement (Emergency)</Option>
-            <Option value="additional_capacity">Additional Maintenance Capacity</Option>
-            <Option value="delayed_maintenance">Delayed Maintenance</Option>
+            <Option value="branding_priority">Branding Priority</Option>
+            <Option value="mileage_balancing">Mileage Balancing</Option>
+            <Option value="shunting_cost">Shunting Cost</Option>
           </Select>
         </div>
 
-        {(scenarioType === 'train_breakdown' || scenarioType === 'train_replacement') && (
-          <div style={{ marginBottom: 16 }}>
-            <label>{scenarioType === 'train_replacement' ? 'Scheduled Train ID (to be replaced):' : 'Train ID:'}:</label>
-            <Input
-              style={{ marginTop: 8 }}
-              placeholder={scenarioType === 'train_replacement' ? 'Enter scheduled train ID' : 'Enter train ID'}
-              type="number"
-              value={trainId}
-              onChange={(e) => setTrainId(parseInt(e.target.value))}
-            />
-          </div>
-        )}
-        
         {scenarioType === 'train_replacement' && (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <label>Scheduled Train ID (to be replaced):</label>
+              <Input
+                style={{ marginTop: 8 }}
+                placeholder="Enter scheduled train ID"
+                type="number"
+                value={trainId}
+                onChange={(e) => setTrainId(parseInt(e.target.value))}
+              />
+            </div>
+            
+            <div style={{ marginBottom: 16 }}>
+              <label>Replacement Train ID (available train):</label>
+              <Select
+                style={{ width: '100%', marginTop: 8 }}
+                placeholder="Select available replacement train"
+                value={replacementTrainId}
+                onChange={setReplacementTrainId}
+              >
+                <Option value={5}>KMRL-005 (Available at Aluva Depot)</Option>
+                <Option value={8}>KMRL-008 (Available at Pettah Depot)</Option>
+                <Option value={12}>KMRL-012 (Available at Kalamassery Depot)</Option>
+                <Option value={15}>KMRL-015 (Available at Aluva Depot)</Option>
+                <Option value={18}>KMRL-018 (Available at Pettah Depot)</Option>
+              </Select>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                Only trains currently available for service are shown
+              </div>
+            </div>
+          </>
+        )}
+
+        {scenarioType === 'branding_priority' && (
           <div style={{ marginBottom: 16 }}>
-            <label>Replacement Train ID (available train):</label>
+            <label>Branding Contract Priority:</label>
             <Select
               style={{ width: '100%', marginTop: 8 }}
-              placeholder="Select available replacement train"
-              value={replacementTrainId}
-              onChange={setReplacementTrainId}
+              placeholder="Select branding priority level"
+              value={trainId}
+              onChange={setTrainId}
             >
-              <Option value={5}>KMRL-005 (Available at Aluva Depot)</Option>
-              <Option value={8}>KMRL-008 (Available at Pettah Depot)</Option>
-              <Option value={12}>KMRL-012 (Available at Kalamassery Depot)</Option>
-              <Option value={15}>KMRL-015 (Available at Aluva Depot)</Option>
-              <Option value={18}>KMRL-018 (Available at Pettah Depot)</Option>
+              <Option value={1}>High Priority - Premium Brands (Coca-Cola, Samsung)</Option>
+              <Option value={2}>Medium Priority - Regional Brands (Kerala Tourism)</Option>
+              <Option value={3}>Low Priority - Local Advertisers</Option>
             </Select>
             <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
-              Only trains currently available for service are shown
+              Simulate scheduling based on branding contract value and visibility
+            </div>
+          </div>
+        )}
+
+        {scenarioType === 'mileage_balancing' && (
+          <div style={{ marginBottom: 16 }}>
+            <label>Mileage Balancing Strategy:</label>
+            <Select
+              style={{ width: '100%', marginTop: 8 }}
+              placeholder="Select mileage balancing approach"
+              value={trainId}
+              onChange={setTrainId}
+            >
+              <Option value={1}>Equalize High Mileage Trains (over 40,000 km)</Option>
+              <Option value={2}>Rotate Low Usage Trains (under 20,000 km)</Option>
+              <Option value={3}>Optimize Fleet-wide Mileage Distribution</Option>
+            </Select>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Balance train usage to extend fleet lifespan and reduce maintenance costs
+            </div>
+          </div>
+        )}
+
+        {scenarioType === 'shunting_cost' && (
+          <div style={{ marginBottom: 16 }}>
+            <label>Shunting Cost Optimization:</label>
+            <Select
+              style={{ width: '100%', marginTop: 8 }}
+              placeholder="Select cost optimization strategy"
+              value={trainId}
+              onChange={setTrainId}
+            >
+              <Option value={1}>Minimize Cross-Depot Movements</Option>
+              <Option value={2}>Reduce Empty Train Runs</Option>
+              <Option value={3}>Optimize Depot-to-Service Routes</Option>
+            </Select>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+              Reduce operational costs by optimizing train movement patterns
             </div>
           </div>
         )}
