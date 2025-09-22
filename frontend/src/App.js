@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Typography, Button } from 'antd';
-import { DashboardOutlined, CarOutlined, ScheduleOutlined, LogoutOutlined } from '@ant-design/icons';
+import { DashboardOutlined, CarOutlined, ScheduleOutlined, LogoutOutlined, BarChartOutlined, ToolOutlined, BellOutlined, FileTextOutlined } from '@ant-design/icons';
 import Dashboard from './components/Dashboard';
 import InductionPlan from './components/InductionPlan';
 import TrainManagement from './pages/TrainManagement';
+import AdvancedTrainManagement from './components/AdvancedTrainManagement';
+import Analytics from './components/Analytics';
+import Maintenance from './components/Maintenance';
+import Alerts from './components/Alerts';
+import Reports from './components/Reports';
 import Login from './components/Login';
 import { theme } from './styles/theme';
 
@@ -27,6 +32,14 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
         return '2';
       case '/induction':
         return '3';
+      case '/analytics':
+        return '4';
+      case '/maintenance':
+        return '5';
+      case '/alerts':
+        return '6';
+      case '/reports':
+        return '7';
       default:
         return '1';
     }
@@ -42,14 +55,38 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
     {
       key: '2',
       icon: <CarOutlined style={{ fontSize: '16px' }} />,
-      label: 'Train Management',
+      label: 'Trains',
       onClick: () => navigate('/trains')
     },
     {
       key: '3',
       icon: <ScheduleOutlined style={{ fontSize: '16px' }} />,
-      label: 'Induction Planning',
+      label: 'Planning',
       onClick: () => navigate('/induction')
+    },
+    {
+      key: '4',
+      icon: <BarChartOutlined style={{ fontSize: '16px' }} />,
+      label: 'Analytics',
+      onClick: () => navigate('/analytics')
+    },
+    {
+      key: '5',
+      icon: <ToolOutlined style={{ fontSize: '16px' }} />,
+      label: 'Maintenance',
+      onClick: () => navigate('/maintenance')
+    },
+    {
+      key: '6',
+      icon: <BellOutlined style={{ fontSize: '16px' }} />,
+      label: 'Alerts',
+      onClick: () => navigate('/alerts')
+    },
+    {
+      key: '7',
+      icon: <FileTextOutlined style={{ fontSize: '16px' }} />,
+      label: 'Reports',
+      onClick: () => navigate('/reports')
     }
   ];
 
@@ -93,7 +130,7 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
           <div style={{ 
             width: '45px', 
             height: '45px', 
-            background: 'rgba(255,255,255,0.2)', 
+            background: 'rgba(98, 176, 207, 0.2)', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center', 
@@ -203,7 +240,11 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/induction" element={<InductionPlan />} />
-          <Route path="/trains" element={<TrainManagement />} />
+          <Route path="/trains" element={<AdvancedTrainManagement />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/reports" element={<Reports />} />
         </Routes>
       </Content>
     </Layout>

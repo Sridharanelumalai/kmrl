@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, message, Tag, Row, Col } from 'antd';
 import { PlusOutlined, EyeOutlined, ToolOutlined } from '@ant-design/icons';
-import { trainService } from '../services/api';
+import apiService, { trainService } from '../services/api';
 import { theme } from '../styles/theme';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
@@ -24,7 +24,7 @@ const TrainManagement = () => {
   const fetchTrains = async () => {
     try {
       setLoading(true);
-      const response = await trainService.getAllTrains();
+      const response = await apiService.getTrains();
       const data = response.data.data || response.data;
       setTrains(data);
     } catch (error) {
@@ -66,8 +66,8 @@ const TrainManagement = () => {
   const fetchTrainDetails = async (trainId) => {
     try {
       const [maintenanceResponse, sensorResponse] = await Promise.all([
-        trainService.getTrainMaintenance(trainId),
-        trainService.getTrainSensors(trainId)
+        apiService.getMaintenanceRecords(),
+        apiService.getSensorData(trainId)
       ]);
       
       setMaintenanceData(maintenanceResponse.data);
@@ -102,7 +102,7 @@ const TrainManagement = () => {
 
   const handleCreateTrain = async (values) => {
     try {
-      const response = await trainService.createTrain(values);
+      const response = await apiService.createTrain(values);
       if (response.data.success) {
         message.success('Train created successfully');
         setModalVisible(false);

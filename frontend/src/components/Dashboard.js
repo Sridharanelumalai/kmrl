@@ -3,7 +3,8 @@ import { Card, Row, Col, Progress, Table, Button, message, Modal, Tag, Skeleton,
 import { ReloadOutlined, ExperimentOutlined, LoadingOutlined, ApiOutlined } from '@ant-design/icons';
 import { useTranslation } from '../i18n/translations';
 import LanguageSwitcher from './LanguageSwitcher';
-import { inductionService, trainService } from '../services/api';
+import apiService, { inductionService, trainService } from '../services/api';
+import { wsService } from '../services/websocket';
 import { theme } from '../styles/theme';
 import moment from 'moment';
 
@@ -18,10 +19,12 @@ const Dashboard = () => {
   const [trainModalTitle, setTrainModalTitle] = useState('');
   const [trainLoading, setTrainLoading] = useState(false);
   const [backendConnected, setBackendConnected] = useState(null);
+  const [realTimeData, setRealTimeData] = useState({});
+  const [lastUpdate, setLastUpdate] = useState(null);
 
   const checkBackendConnection = async () => {
     try {
-      const response = await inductionService.testConnection();
+      const response = await apiService.healthCheck();
       setBackendConnected(response.data.connected);
     } catch (error) {
       setBackendConnected(false);
@@ -31,7 +34,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await inductionService.getDashboardData();
+      const response = await apiService.getDashboardData();
       const data = response.data.data || response.data;
       setDashboardData(data);
     } catch (error) {
@@ -78,11 +81,11 @@ const Dashboard = () => {
       
       let response;
       if (type === 'all') {
-        response = await trainService.getAllTrains();
+        response = await apiService.getTrains();
       } else if (type === 'available') {
-        response = await trainService.getAvailableTrains();
+        response = await apiService.getTrains('Available');
       } else if (type === 'maintenance') {
-        response = await trainService.getMaintenanceTrains();
+        response = await apiService.getTrains('Maintenance');
       }
       
       const data = response.data.data || response.data;
@@ -99,7 +102,23 @@ const Dashboard = () => {
   useEffect(() => {
     checkBackendConnection();
     fetchDashboardData();
+    
+    // Connect to WebSocket for real-time updates
+    wsService.connect();
+    wsService.subscribe('sensor_update', handleSensorUpdate);
+    
+    return () => {
+      wsService.unsubscribe('sensor_update', handleSensorUpdate);
+    };
   }, []);
+  
+  const handleSensorUpdate = (data) => {
+    setRealTimeData(prev => ({
+      ...prev,
+      [data.train_id]: data.data
+    }));
+    setLastUpdate(new Date());
+  };
 
   if (loading || !dashboardData) {
     return (

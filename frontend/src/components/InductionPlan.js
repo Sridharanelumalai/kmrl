@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, List, Tag, Modal, Select, Input, message, Row, Col, Statistic, Table, Alert } from 'antd';
 import { PlayCircleOutlined, ExperimentOutlined, HistoryOutlined, ApiOutlined } from '@ant-design/icons';
-import { inductionService } from '../services/api';
+import apiService, { inductionService } from '../services/api';
 import { theme } from '../styles/theme';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
@@ -29,7 +29,7 @@ const InductionPlan = () => {
       setUsingMockData(false);
       
       console.log('Frontend: Starting plan generation...');
-      const response = await inductionService.getInductionPlan();
+      const response = await apiService.generateInductionPlan();
       console.log('Frontend: Received response:', response);
       
       const data = response.data.data || response.data;
@@ -91,7 +91,7 @@ const InductionPlan = () => {
         parameters: {}
       };
       
-      const response = await inductionService.simulateScenario(scenarioData);
+      const response = await apiService.simulateScenario(scenarioData);
       const result = response.data.data || response.data;
       
       if (result) {
@@ -138,7 +138,7 @@ const InductionPlan = () => {
 
   const checkBackendConnection = async () => {
     try {
-      const response = await inductionService.testConnection();
+      const response = await apiService.healthCheck();
       setBackendConnected(response.data.connected);
     } catch (error) {
       setBackendConnected(false);
@@ -291,7 +291,7 @@ const InductionPlan = () => {
                     }}
                     onClick={async () => {
                       try {
-                        const response = await inductionService.getHistory();
+                        const response = await apiService.getInductionHistory();
                         const data = response.data.data || response.data;
                         setHistoryData(data);
                         setHistoryVisible(true);
