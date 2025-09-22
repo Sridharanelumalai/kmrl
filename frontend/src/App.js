@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import InductionPlan from './components/InductionPlan';
 import TrainManagement from './pages/TrainManagement';
 import Login from './components/Login';
+import { theme } from './styles/theme';
 
 const { Header, Content } = Layout;
 const { Title } = Typography;
@@ -55,9 +56,9 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ 
-        background: '#1a7f72',
-        padding: '0 32px',
-        boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+        background: theme.colors.primary,
+        padding: `0 ${theme.spacing.lg}px`,
+        boxShadow: theme.shadows.lg,
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -107,17 +108,14 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
             <Title level={4} style={{ 
               color: 'white', 
               margin: 0,
-              fontWeight: '700',
-              fontSize: '20px',
-              lineHeight: '1.2',
+              ...theme.typography.h3,
               textShadow: '0 2px 4px rgba(0,0,0,0.3)'
             }}>
               KMRL System
             </Title>
             <div style={{ 
               color: 'rgba(255,255,255,0.9)', 
-              fontSize: '12px', 
-              fontWeight: '500',
+              ...theme.typography.caption,
               letterSpacing: '0.5px',
               marginTop: '2px'
             }}>
@@ -132,24 +130,24 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
                   key={item.key}
                   onClick={item.onClick}
                   style={{
-                    padding: '8px 16px',
+                    padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
                     background: isActive 
                       ? 'rgba(255,255,255,0.9)' 
                       : 'rgba(255,255,255,0.15)',
-                    color: isActive ? '#667eea' : 'white',
+                    color: isActive ? theme.colors.primary : 'white',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: `${theme.spacing.xs}px`,
                     transition: 'all 0.3s ease',
                     border: isActive ? '2px solid rgba(255,255,255,0.3)' : '2px solid rgba(255,255,255,0.2)',
                     fontWeight: isActive ? '700' : '600',
-                    fontSize: '13px',
+                    ...theme.typography.caption,
                     minWidth: 'fit-content',
                     whiteSpace: 'nowrap',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    boxShadow: theme.shadows.sm,
                     backdropFilter: 'blur(10px)',
-                    borderRadius: '12px'
+                    borderRadius: theme.borderRadius.lg
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
@@ -178,13 +176,14 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
             background: 'rgba(220, 38, 38, 0.8)',
             border: '2px solid rgba(255,255,255,0.3)',
             color: 'white',
-            padding: '8px 16px',
+            padding: `${theme.spacing.xs}px ${theme.spacing.sm}px`,
             height: 'auto',
             fontWeight: '600',
-            fontSize: '13px',
+            ...theme.typography.caption,
             transition: 'all 0.3s ease',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            backdropFilter: 'blur(10px)'
+            boxShadow: theme.shadows.sm,
+            backdropFilter: 'blur(10px)',
+            borderRadius: theme.borderRadius.md
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'rgba(185, 28, 28, 0.9)';
@@ -199,7 +198,7 @@ function AppContent({ isAuthenticated, onLogin, onLogout }) {
         </Button>
       </Header>
       
-      <Content style={{ margin: 0, background: '#eaf9f5', minHeight: 'calc(100vh - 90px)' }}>
+      <Content style={{ margin: 0, background: theme.colors.neutral[50], minHeight: 'calc(100vh - 90px)' }}>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />

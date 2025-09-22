@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, List, Tag, Modal, Select, Input, message, Row, Col, Statistic, Table } from 'antd';
-import { PlayCircleOutlined, ExperimentOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Card, Button, List, Tag, Modal, Select, Input, message, Row, Col, Statistic, Table, Alert } from 'antd';
+import { PlayCircleOutlined, ExperimentOutlined, HistoryOutlined, ApiOutlined } from '@ant-design/icons';
 import { inductionService } from '../services/api';
+import { theme } from '../styles/theme';
+import LoadingSpinner from '../components/LoadingSpinner';
+import EmptyState from '../components/EmptyState';
 import moment from 'moment';
 
 const { Option } = Select;
@@ -17,17 +20,33 @@ const InductionPlan = () => {
   const [replacementTrainId, setReplacementTrainId] = useState(null);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyData, setHistoryData] = useState([]);
+  const [backendConnected, setBackendConnected] = useState(null);
+  const [usingMockData, setUsingMockData] = useState(false);
 
   const generatePlan = async () => {
     try {
       setLoading(true);
+      setUsingMockData(false);
+      
+      console.log('Frontend: Starting plan generation...');
       const response = await inductionService.getInductionPlan();
-      // Handle backend response format
+      console.log('Frontend: Received response:', response);
+      
       const data = response.data.data || response.data;
-      setInductionPlan(data);
+      console.log('Frontend: Extracted data:', data);
+      
+      if (Array.isArray(data) && data.length > 0) {
+        setInductionPlan(data);
+        message.success('Backend induction plan generated successfully!');
+        console.log('Frontend: Plan set successfully');
+      } else {
+        throw new Error('Invalid data format from backend');
+      }
     } catch (error) {
-      console.error('Plan generation error:', error);
-      // Use mock data when backend is not available
+      console.error('Frontend: Plan generation error:', error);
+      setUsingMockData(true);
+      
+      // Fallback mock data
       const mockPlan = [
         {
           train_id: 1,
@@ -55,8 +74,8 @@ const InductionPlan = () => {
         }
       ];
       setInductionPlan(mockPlan);
-      message.warning('Backend not available - Using demo data');
-      console.log('Falling back to mock data due to:', error.message);
+      message.warning('Backend unavailable - Using demo data');
+      console.log('Frontend: Using fallback data');
     } finally {
       setLoading(false);
     }
@@ -65,18 +84,26 @@ const InductionPlan = () => {
   const runSimulation = async () => {
     try {
       setSimulationLoading(true);
-      const parameters = {};
+      const scenarioData = {
+        scenario_type: scenarioType,
+        train_id: trainId,
+        replacement_train_id: replacementTrainId,
+        parameters: {}
+      };
       
-      if (scenarioType === 'train_breakdown' && trainId) {
-        parameters.train_id = trainId;
-      }
+      const response = await inductionService.simulateScenario(scenarioData);
+      const result = response.data.data || response.data;
       
-      if (scenarioType === 'train_replacement' && trainId && replacementTrainId) {
-        parameters.original_train_id = trainId;
-        parameters.replacement_train_id = replacementTrainId;
+      if (result) {
+        setSimulationResult(result);
+        message.success('Simulation completed successfully!');
+      } else {
+        throw new Error('Invalid simulation response');
       }
-
-      // Mock simulation results
+    } catch (error) {
+      console.error('Simulation error:', error);
+      
+      // Fallback mock simulation
       const mockResult = {
         scenario_type: scenarioType,
         base_metrics: {
@@ -103,16 +130,23 @@ const InductionPlan = () => {
       };
       
       setSimulationResult(mockResult);
-      message.success('Simulation completed successfully');
-    } catch (error) {
-      message.error('Simulation failed');
-      console.error('Simulation error:', error);
+      message.warning('Backend unavailable - Using demo results');
     } finally {
       setSimulationLoading(false);
     }
   };
 
+  const checkBackendConnection = async () => {
+    try {
+      const response = await inductionService.testConnection();
+      setBackendConnected(response.data.connected);
+    } catch (error) {
+      setBackendConnected(false);
+    }
+  };
+
   useEffect(() => {
+    checkBackendConnection();
     generatePlan();
   }, []);
 
@@ -128,14 +162,41 @@ const InductionPlan = () => {
     return 'Low';
   };
 
+  if (loading && inductionPlan.length === 0) {
+    return <LoadingSpinner size="large" tip="Generating induction plan..." />;
+  }
+
   return (
-    <div style={{ padding: 24 }}>
+    <div className="fade-in" style={{ padding: theme.spacing.md, minHeight: '100vh', background: theme.colors.neutral[50] }}>
+      {(backendConnected === false || usingMockData) && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+          <Col span={24}>
+            <Alert
+              message={backendConnected === false ? "Backend Disconnected" : "Using Demo Data"}
+              description={backendConnected === false 
+                ? "Unable to connect to backend API. Using fallback mock data for demonstration."
+                : "Currently using demo data. Backend API will be used when service is available."}
+              type="warning"
+              showIcon
+              icon={<ApiOutlined />}
+              action={
+                <Button size="small" onClick={checkBackendConnection}>
+                  Retry Connection
+                </Button>
+              }
+              style={{ borderRadius: theme.borderRadius.md }}
+            />
+          </Col>
+        </Row>
+      )}
+
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col span={24}>
           <Card style={{ 
-            background: '#1a7f72',
+            background: theme.colors.primary,
             border: 'none',
-            boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+            borderRadius: theme.borderRadius.xl,
+            boxShadow: theme.shadows.lg,
             overflow: 'hidden',
             position: 'relative'
           }}>
@@ -174,8 +235,20 @@ const InductionPlan = () => {
                     animation: 'pulse 2s ease-in-out infinite'
                   }}>🚊</div>
                   <div>
-                    <h2 style={{ color: 'white', margin: 0, fontSize: '28px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Train Induction Planning</h2>
-                    <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', marginTop: '4px' }}>AI-Powered Scheduling & Optimization System</div>
+                    <h2 style={{ color: 'white', margin: 0, ...theme.typography.h1, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>Train Induction Planning</h2>
+                    <div style={{ color: 'rgba(255,255,255,0.9)', ...theme.typography.body, marginTop: '4px' }}>
+                      AI-Powered Scheduling & Optimization System
+                      {backendConnected === true && (
+                        <Tag color="green" style={{ marginLeft: 8, fontSize: '10px' }}>
+                          Backend Connected
+                        </Tag>
+                      )}
+                      {backendConnected === false && (
+                        <Tag color="orange" style={{ marginLeft: 8, fontSize: '10px' }}>
+                          Demo Mode
+                        </Tag>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Col>
@@ -207,6 +280,7 @@ const InductionPlan = () => {
                   >
                     What-If Simulation
                   </Button>
+
                   <Button 
                     icon={<HistoryOutlined />}
                     style={{
@@ -251,47 +325,66 @@ const InductionPlan = () => {
       </Row>
 
       {inductionPlan.length > 0 && (
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Row gutter={[theme.spacing.sm, theme.spacing.sm]} style={{ marginBottom: theme.spacing.md }}>
           <Col xs={24} sm={8}>
-            <Card>
+            <Card style={{ borderRadius: theme.borderRadius.lg, boxShadow: theme.shadows.sm }}>
               <Statistic
                 title="Total Trains Scheduled"
                 value={inductionPlan.length}
-                valueStyle={{ color: '#1890ff' }}
+                valueStyle={{ color: theme.colors.info, ...theme.typography.h2 }}
               />
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card>
+            <Card style={{ borderRadius: theme.borderRadius.lg, boxShadow: theme.shadows.sm }}>
               <Statistic
                 title="High Priority Trains"
                 value={inductionPlan.filter(p => p.priority_score >= 70).length}
-                valueStyle={{ color: '#ff4d4f' }}
+                valueStyle={{ color: theme.colors.error, ...theme.typography.h2 }}
               />
             </Card>
           </Col>
           <Col xs={24} sm={8}>
-            <Card>
+            <Card style={{ borderRadius: theme.borderRadius.lg, boxShadow: theme.shadows.sm }}>
               <Statistic
                 title="Average Priority Score"
                 value={inductionPlan.reduce((sum, p) => sum + p.priority_score, 0) / inductionPlan.length}
                 precision={1}
-                valueStyle={{ color: '#52c41a' }}
+                valueStyle={{ color: theme.colors.success, ...theme.typography.h2 }}
               />
             </Card>
           </Col>
         </Row>
       )}
 
-      <Card title="Ranked Induction List" loading={loading}>
-        <List
-          itemLayout="vertical"
-          dataSource={inductionPlan}
-          renderItem={(item, index) => (
-            <List.Item
-              key={item.train_id}
-              className={`induction-plan-item priority-${getPriorityText(item.priority_score).toLowerCase()}`}
-            >
+      <Card 
+        title={<span style={{ ...theme.typography.h3, color: theme.colors.neutral[800] }}>Ranked Induction List</span>}
+        loading={loading}
+        style={{ borderRadius: theme.borderRadius.lg, boxShadow: theme.shadows.md }}
+      >
+        {inductionPlan.length === 0 ? (
+          <EmptyState 
+            title="No Induction Plan Generated"
+            description="Click 'Generate New Plan' to create an AI-optimized train induction schedule."
+            actionText="Generate Plan"
+            onAction={generatePlan}
+          />
+        ) : (
+          <List
+            itemLayout="vertical"
+            dataSource={inductionPlan}
+            renderItem={(item, index) => (
+              <List.Item
+                key={item.train_id}
+                className={`induction-plan-item priority-${getPriorityText(item.priority_score).toLowerCase()}`}
+                style={{
+                  borderRadius: theme.borderRadius.md,
+                  marginBottom: theme.spacing.sm,
+                  padding: theme.spacing.sm,
+                  background: 'white',
+                  boxShadow: theme.shadows.sm
+                }}
+              >
               <Row justify="space-between" align="top">
                 <Col flex="auto">
                   <div style={{ marginBottom: 8 }}>
@@ -323,9 +416,10 @@ const InductionPlan = () => {
                   </div>
                 </Col>
               </Row>
-            </List.Item>
-          )}
-        />
+              </List.Item>
+            )}
+          />
+        )}
       </Card>
 
       {/* What-If Simulation Modal */}

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Input, Button, Card, message, Typography, Row, Col } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
+import { useTranslation } from '../i18n/translations';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const { Text } = Typography;
 
 const Login = ({ onLogin }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -275,6 +278,9 @@ const Login = ({ onLogin }) => {
             background: 'white'
           }}>
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <div style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+                <LanguageSwitcher />
+              </div>
               <div style={{
                 width: '60px',
                 height: '60px',
@@ -295,8 +301,8 @@ const Login = ({ onLogin }) => {
                 marginBottom: '0.5rem'
               }}>
                 {showForm ? 
-                  (userType === 'new' ? 'Create Account' : 'Welcome Back') : 
-                  'KMRL Login'
+                  (userType === 'new' ? 'Create Account' : t('welcome')) : 
+                  t('loginTitle')
                 }
               </h2>
               <p style={{
@@ -305,7 +311,7 @@ const Login = ({ onLogin }) => {
               }}>
                 {showForm ? 
                   (userType === 'new' ? 'Complete your registration' : 'Sign in to your account') : 
-                  'Choose your login type'
+                  t('enterCredentials')
                 }
               </p>
             </div>

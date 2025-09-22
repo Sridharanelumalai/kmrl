@@ -1,0 +1,22 @@
+[
+  {"id": 1, "trainNumber": "KMRL-001", "model": "Metro-A1", "status": "Available", "mileage": 45000, "currentDepot": "Aluva Depot", "healthScore": 75, "lastMaintenance": "2024-01-10", "nextMaintenance": "2024-02-10"},
+  {"id": 2, "trainNumber": "KMRL-002", "model": "Metro-B2", "status": "Available", "mileage": 38000, "currentDepot": "Pettah Depot", "healthScore": 85, "lastMaintenance": "2024-01-15", "nextMaintenance": "2024-02-15"},
+  {"id": 3, "trainNumber": "KMRL-003", "model": "Metro-A1", "status": "Maintenance", "mileage": 52000, "currentDepot": "Kalamassery Depot", "healthScore": 65, "lastMaintenance": "2024-01-05", "nextMaintenance": "2024-02-05"},
+  {"id": 4, "trainNumber": "KMRL-004", "model": "Metro-C3", "status": "Available", "mileage": 29000, "currentDepot": "Aluva Depot", "healthScore": 92, "lastMaintenance": "2024-01-20", "nextMaintenance": "2024-02-20"},
+  {"id": 5, "trainNumber": "KMRL-005", "model": "Metro-B2", "status": "In Service", "mileage": 41000, "currentDepot": "Pettah Depot", "healthScore": 78, "lastMaintenance": "2024-01-12", "nextMaintenance": "2024-02-12"},
+  {"id": 6, "trainNumber": "KMRL-006", "model": "Metro-A1", "status": "Available", "mileage": 33000, "currentDepot": "Kalamassery Depot", "healthScore": 88, "lastMaintenance": "2024-01-18", "nextMaintenance": "2024-02-18"},
+  {"id": 7, "trainNumber": "KMRL-007", "model": "Metro-C3", "status": "Available", "mileage": 47000, "currentDepot": "Aluva Depot", "healthScore": 72, "lastMaintenance": "2024-01-08", "nextMaintenance": "2024-02-08"},
+  {"id": 8, "trainNumber": "KMRL-008", "model": "Metro-B2", "status": "Available", "mileage": 35000, "currentDepot": "Pettah Depot", "healthScore": 90, "lastMaintenance": "2024-01-22", "nextMaintenance": "2024-02-22"},
+  {"id": 9, "trainNumber": "KMRL-009", "model": "Metro-A1", "status": "Maintenance", "mileage": 49000, "currentDepot": "Kalamassery Depot", "healthScore": 68, "lastMaintenance": "2024-01-03", "nextMaintenance": "2024-02-03"},
+  {"id": 10, "trainNumber": "KMRL-010", "model": "Metro-C3", "status": "Available", "mileage": 31000, "currentDepot": "Aluva Depot", "healthScore": 86, "lastMaintenance": "2024-01-25", "nextMaintenance": "2024-02-25"},
+  {"id": 11, "trainNumber": "KMRL-011", "model": "Metro-B2", "status": "Available", "mileage": 43000, "currentDepot": "Pettah Depot", "healthScore": 80, "lastMaintenance": "2024-01-14", "nextMaintenance": "2024-02-14"},
+  {"id": 12, "trainNumber": "KMRL-012", "model": "Metro-A1", "status": "Available", "mileage": 36000, "currentDepot": "Kalamassery Depot", "healthScore": 84, "lastMaintenance": "2024-01-19", "nextMaintenance": "2024-02-19"},
+  {"id": 13, "trainNumber": "KMRL-013", "model": "Metro-C3", "status": "In Service", "mileage": 40000, "currentDepot": "Aluva Depot", "healthScore": 76, "lastMaintenance": "2024-01-11", "nextMaintenance": "2024-02-11"},
+  {"id": 14, "trainNumber": "KMRL-014", "model": "Metro-B2", "status": "Available", "mileage": 28000, "currentDepot": "Pettah Depot", "healthScore": 94, "lastMaintenance": "2024-01-26", "nextMaintenance": "2024-02-26"},
+  {"id": 15, "trainNumber": "KMRL-015", "model": "Metro-A1", "status": "Available", "mileage": 44000, "currentDepot": "Kalamassery Depot", "healthScore": 82, "lastMaintenance": "2024-01-16", "nextMaintenance": "2024-02-16"},
+  {"id": 16, "trainNumber": "KMRL-016", "model": "Metro-C3", "status": "Maintenance", "mileage": 51000, "currentDepot": "Aluva Depot", "healthScore": 63, "lastMaintenance": "2024-01-02", "nextMaintenance": "2024-02-02"},
+  {"id": 17, "trainNumber": "KMRL-017", "model": "Metro-B2", "status": "Available", "mileage": 32000, "currentDepot": "Pettah Depot", "healthScore": 89, "lastMaintenance": "2024-01-23", "nextMaintenance": "2024-02-23"},
+  {"id": 18, "trainNumber": "KMRL-018", "model": "Metro-A1", "status": "Available", "mileage": 37000, "currentDepot": "Kalamassery Depot", "healthScore": 87, "lastMaintenance": "2024-01-17", "nextMaintenance": "2024-02-17"},
+  {"id": 19, "trainNumber": "KMRL-019", "model": "Metro-C3", "status": "Available", "mileage": 39000, "currentDepot": "Aluva Depot", "healthScore": 81, "lastMaintenance": "2024-01-13", "nextMaintenance": "2024-02-13"},
+  {"id": 20, "trainNumber": "KMRL-020", "model": "Metro-B2", "status": "Maintenance", "mileage": 48000, "currentDepot": "Pettah Depot", "healthScore": 70, "lastMaintenance": "2024-01-06", "nextMaintenance": "2024-02-06"}
+]

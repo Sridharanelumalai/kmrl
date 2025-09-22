@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Progress, Table, Button, message, Modal, Tag, Skeleton, Spin } from 'antd';
-
-import { ReloadOutlined, ExperimentOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Progress, Table, Button, message, Modal, Tag, Skeleton, Spin, Alert } from 'antd';
+import { ReloadOutlined, ExperimentOutlined, LoadingOutlined, ApiOutlined } from '@ant-design/icons';
+import { useTranslation } from '../i18n/translations';
+import LanguageSwitcher from './LanguageSwitcher';
 import { inductionService, trainService } from '../services/api';
+import { theme } from '../styles/theme';
 import moment from 'moment';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [anomalyModalVisible, setAnomalyModalVisible] = useState(false);
@@ -14,19 +17,25 @@ const Dashboard = () => {
   const [trainDetails, setTrainDetails] = useState([]);
   const [trainModalTitle, setTrainModalTitle] = useState('');
   const [trainLoading, setTrainLoading] = useState(false);
+  const [backendConnected, setBackendConnected] = useState(null);
+
+  const checkBackendConnection = async () => {
+    try {
+      const response = await inductionService.testConnection();
+      setBackendConnected(response.data.connected);
+    } catch (error) {
+      setBackendConnected(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      console.log('Attempting to connect to backend at:', 'http://localhost:8084/api/induction/dashboard');
       const response = await inductionService.getDashboardData();
-      console.log('Backend response received:', response);
-      // Handle Spring Boot response format
       const data = response.data.data || response.data;
       setDashboardData(data);
     } catch (error) {
       console.error('Dashboard error:', error);
-      console.error('Error details:', error.response || error.message);
       // Use mock data when backend is not available
       const mockData = {
         fleet_metrics: {
@@ -55,8 +64,7 @@ const Dashboard = () => {
         }))
       };
       setDashboardData(mockData);
-      message.warning('Backend not available - Using demo data');
-      console.log('Falling back to mock data due to:', error.message);
+      message.warning('Using demo data');
     } finally {
       setLoading(false);
     }
@@ -89,6 +97,7 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
+    checkBackendConnection();
     fetchDashboardData();
   }, []);
 
@@ -266,13 +275,34 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="dashboard-container">
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+    <div className="dashboard-container fade-in" style={{ padding: theme.spacing.md, minHeight: '100vh' }}>
+      {backendConnected === false && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+          <Col span={24}>
+            <Alert
+              message="Backend Service Status"
+              description="Backend API is currently unavailable. Dashboard is using demo data. Some features may be limited."
+              type="warning"
+              showIcon
+              icon={<ApiOutlined />}
+              action={
+                <Button size="small" onClick={checkBackendConnection}>
+                  Test Connection
+                </Button>
+              }
+              style={{ borderRadius: theme.borderRadius.md }}
+            />
+          </Col>
+        </Row>
+      )}
+      
+      <Row gutter={[theme.spacing.sm, theme.spacing.sm]} style={{ marginBottom: theme.spacing.md }}>
         <Col span={24}>
           <Card style={{ 
-            background: '#1a7f72',
+            background: theme.colors.primary,
             border: 'none',
-            boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+            borderRadius: theme.borderRadius.xl,
+            boxShadow: theme.shadows.lg,
             overflow: 'hidden',
             position: 'relative'
           }}>
@@ -311,9 +341,21 @@ const Dashboard = () => {
                     animation: 'pulse 2s ease-in-out infinite'
                   }}>📊</div>
                   <div>
-                    <h2 style={{ color: 'white', margin: 0, fontSize: '28px', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>KMRL Dashboard</h2>
-                    <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', marginTop: '4px' }}>Real-time Train Operations Overview</div>
-                    <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginTop: '8px', display: 'flex', gap: '16px' }}>
+                    <h2 style={{ color: 'white', margin: 0, ...theme.typography.h1, textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{t('kmrlDashboard')}</h2>
+                    <div style={{ color: 'rgba(255,255,255,0.9)', ...theme.typography.body, marginTop: '4px' }}>
+                      {t('realTimeOverview')}
+                      {backendConnected === true && (
+                        <Tag color="green" style={{ marginLeft: 8, fontSize: '10px' }}>
+                          {t('backendConnected')}
+                        </Tag>
+                      )}
+                      {backendConnected === false && (
+                        <Tag color="orange" style={{ marginLeft: 8, fontSize: '10px' }}>
+                          {t('demoMode')}
+                        </Tag>
+                      )}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.8)', ...theme.typography.caption, marginTop: theme.spacing.xs, display: 'flex', gap: theme.spacing.sm, flexWrap: 'wrap' }}>
                       <span>🏭 Aluva: 80% (3 free)</span>
                       <span>🏭 Pettah: 80% (2 free)</span>
                       <span>🏭 Kalamassery: 75% (3 free)</span>
@@ -322,20 +364,23 @@ const Dashboard = () => {
                 </div>
               </Col>
               <Col>
-                <Button 
-                  icon={<ReloadOutlined />} 
-                  onClick={fetchDashboardData}
-                  loading={loading}
-                  style={{
-                    background: 'rgba(255,255,255,0.2)',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    color: 'white',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                  }}
-                >
-                  Refresh Data
-                </Button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <LanguageSwitcher />
+                  <Button 
+                    icon={<ReloadOutlined />} 
+                    onClick={fetchDashboardData}
+                    loading={loading}
+                    style={{
+                      background: 'rgba(255,255,255,0.2)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      color: 'white',
+                      backdropFilter: 'blur(10px)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                    }}
+                  >
+                    {t('refreshData')}
+                  </Button>
+                </div>
               </Col>
             </Row>
           </Card>
@@ -343,24 +388,26 @@ const Dashboard = () => {
       </Row>
 
       {/* Fleet Metrics */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+      <Row gutter={[theme.spacing.sm, theme.spacing.sm]} style={{ marginBottom: theme.spacing.md }}>
         <Col xs={24} sm={12} md={8}>
           <Card 
             hoverable
             onClick={() => showTrainDetails('all', 'All Trains')}
             style={{ 
-              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              background: `linear-gradient(135deg, ${theme.colors.secondary}, #1d4ed8)`,
               border: 'none',
-              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
+              borderRadius: theme.borderRadius.lg,
+              boxShadow: theme.shadows.md,
               cursor: 'pointer',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '120px'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Total Trains</div>
-                <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.total_trains}</div>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>Click to view details</div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', ...theme.typography.body, marginBottom: '4px' }}>{t('totalTrains')}</div>
+                <div style={{ color: 'white', ...theme.typography.h1 }}>{fleet_metrics.total_trains}</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', ...theme.typography.caption, marginTop: '4px' }}>{t('clickToView')}</div>
               </div>
               <div style={{ fontSize: '40px', opacity: 0.3 }}>🚊</div>
             </div>
@@ -371,18 +418,20 @@ const Dashboard = () => {
             hoverable
             onClick={() => showTrainDetails('available', 'Available Trains')}
             style={{ 
-              background: 'linear-gradient(135deg, #10b981, #059669)',
+              background: `linear-gradient(135deg, ${theme.colors.success}, #059669)`,
               border: 'none',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+              borderRadius: theme.borderRadius.lg,
+              boxShadow: theme.shadows.md,
               cursor: 'pointer',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '120px'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Available Trains</div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>{t('availableTrains')}</div>
                 <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.available_trains}</div>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>Click to view details</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>{t('clickToView')}</div>
               </div>
               <div style={{ fontSize: '40px', opacity: 0.3 }}>✅</div>
             </div>
@@ -393,18 +442,20 @@ const Dashboard = () => {
             hoverable
             onClick={() => showTrainDetails('maintenance', 'Maintenance Due Trains')}
             style={{ 
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              background: `linear-gradient(135deg, ${theme.colors.warning}, #d97706)`,
               border: 'none',
-              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+              borderRadius: theme.borderRadius.lg,
+              boxShadow: theme.shadows.md,
               cursor: 'pointer',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              height: '120px'
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>Maintenance Due</div>
+                <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '14px', marginBottom: '4px' }}>{t('maintenanceDue')}</div>
                 <div style={{ color: 'white', fontSize: '32px', fontWeight: 'bold' }}>{fleet_metrics.maintenance_due}</div>
-                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>Click to view details</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginTop: '4px' }}>{t('clickToView')}</div>
               </div>
               <div style={{ fontSize: '40px', opacity: 0.3 }}>🔧</div>
             </div>
@@ -415,20 +466,21 @@ const Dashboard = () => {
 
 
 
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+      <Row gutter={[theme.spacing.sm, theme.spacing.sm]} style={{ marginTop: theme.spacing.md }}>
         <Col span={24}>
           <Card 
             style={{
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              border: '1px solid #e5e7eb'
+              borderRadius: theme.borderRadius.lg,
+              boxShadow: theme.shadows.md,
+              border: `1px solid ${theme.colors.neutral[200]}`
             }}
             title={
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ fontSize: '24px' }}>🚊</div>
                 <div>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#1a7f72' }}>Current Induction Plan</div>
-                  <div style={{ fontSize: '12px', fontWeight: 'normal', color: '#666', marginTop: '2px' }}>
-                    AI-generated train scheduling and maintenance optimization
+                  <div style={{ ...theme.typography.h3, color: theme.colors.primary }}>{t('currentInductionPlan')}</div>
+                  <div style={{ ...theme.typography.caption, color: theme.colors.neutral[500], marginTop: '2px' }}>
+                    {t('aiOptimization')}
                   </div>
                 </div>
               </div>
@@ -437,19 +489,23 @@ const Dashboard = () => {
               <Button 
                 type="primary" 
                 size="small"
-                style={{ background: '#1a7f72', borderColor: '#1a7f72' }}
-                onClick={() => window.location.href = '/induction-plan'}
+                style={{ 
+                  background: theme.colors.primary, 
+                  borderColor: theme.colors.primary,
+                  borderRadius: theme.borderRadius.md
+                }}
+                onClick={() => window.location.href = '/induction'}
               >
                 View Full Plan
               </Button>
             }
           >
             <div style={{ 
-              marginBottom: '16px', 
-              padding: '16px', 
-              background: 'linear-gradient(135deg, #f0f9ff, #dbeafe)', 
-              borderRadius: '12px', 
-              border: '1px solid #93c5fd',
+              marginBottom: theme.spacing.sm, 
+              padding: theme.spacing.sm, 
+              background: `linear-gradient(135deg, ${theme.colors.neutral[50]}, #dbeafe)`, 
+              borderRadius: theme.borderRadius.lg, 
+              border: `1px solid ${theme.colors.neutral[300]}`,
               position: 'relative',
               overflow: 'hidden'
             }}>
@@ -460,7 +516,7 @@ const Dashboard = () => {
                 fontSize: '60px',
                 opacity: 0.1
               }}>🤖</div>
-              <div style={{ fontSize: '13px', color: '#1e40af', lineHeight: '1.5' }}>
+              <div style={{ ...theme.typography.caption, color: theme.colors.secondary, lineHeight: '1.5' }}>
                 <strong>🤖 AI Optimization:</strong> The system continuously analyzes train conditions, maintenance schedules, and depot capacity to generate optimal induction plans. 
                 High-priority trains are automatically scheduled based on mileage, sensor data, and safety requirements.
               </div>
@@ -504,9 +560,9 @@ const Dashboard = () => {
                   dataIndex: 'priority_score',
                   key: 'priority_score',
                   render: (score) => {
-                    const color = score >= 70 ? 'red' : score >= 40 ? 'orange' : 'green';
+                    const color = score >= 70 ? theme.colors.error : score >= 40 ? theme.colors.warning : theme.colors.success;
                     const text = score >= 70 ? 'High' : score >= 40 ? 'Medium' : 'Low';
-                    return <Tag color={color}>{text} ({score})</Tag>;
+                    return <Tag style={{ color: 'white', backgroundColor: color, border: 'none', borderRadius: theme.borderRadius.sm }}>{text} ({score})</Tag>;
                   }
                 },
                 {

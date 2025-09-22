@@ -2,11 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Modal, Form, Input, Select, message, Tag, Row, Col } from 'antd';
 import { PlusOutlined, EyeOutlined, ToolOutlined } from '@ant-design/icons';
 import { trainService } from '../services/api';
+import { theme } from '../styles/theme';
+import LoadingSpinner from '../components/LoadingSpinner';
+import EmptyState from '../components/EmptyState';
+import { useTranslation } from '../i18n/translations';
 import moment from 'moment';
 
 const { Option } = Select;
 
 const TrainManagement = () => {
+  const { t } = useTranslation();
   const [trains, setTrains] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -380,22 +385,33 @@ const TrainManagement = () => {
     },
   ];
 
+  if (loading && trains.length === 0) {
+    return <LoadingSpinner size="large" tip="Loading trains..." />;
+  }
+
   return (
-    <div style={{ padding: 24 }}>
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+    <div className="fade-in" style={{ padding: theme.spacing.md, minHeight: '100vh', background: theme.colors.neutral[50] }}>
+      <Row gutter={[theme.spacing.sm, theme.spacing.sm]} style={{ marginBottom: theme.spacing.md }}>
         <Col span={24}>
-          <Card>
+          <Card style={{ borderRadius: theme.borderRadius.lg, boxShadow: theme.shadows.md }}>
             <Row justify="space-between" align="middle">
               <Col>
-                <h2>Train Fleet Management</h2>
+                <h2 style={{ ...theme.typography.h2, color: theme.colors.neutral[800], margin: 0 }}>{t('trainManagement')}</h2>
+                <p style={{ ...theme.typography.body, color: theme.colors.neutral[500], margin: '4px 0 0 0' }}>Manage and monitor your train fleet</p>
               </Col>
               <Col>
                 <Button 
                   type="primary" 
                   icon={<PlusOutlined />}
                   onClick={() => setModalVisible(true)}
+                  style={{
+                    background: theme.colors.primary,
+                    borderColor: theme.colors.primary,
+                    borderRadius: theme.borderRadius.md,
+                    height: '40px'
+                  }}
                 >
-                  Add New Train
+                  {t('addNewTrain')}
                 </Button>
               </Col>
             </Row>
@@ -403,26 +419,39 @@ const TrainManagement = () => {
         </Col>
       </Row>
 
-      <Card>
-        <Table
-          columns={columns}
-          dataSource={trains}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-          }}
-        />
+      <Card style={{ borderRadius: theme.borderRadius.lg, boxShadow: theme.shadows.md }}>
+        {trains.length === 0 && !loading ? (
+          <EmptyState 
+            title="No Trains Found"
+            description="Start by adding your first train to the fleet management system."
+            actionText="Add New Train"
+            onAction={() => setModalVisible(true)}
+          />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={trains}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} trains`
+            }}
+            scroll={{ x: 800 }}
+          />
+        )}
       </Card>
 
       {/* Add Train Modal */}
       <Modal
-        title="Add New Train"
+        title={<span style={{ ...theme.typography.h3, color: theme.colors.neutral[800] }}>Add New Train</span>}
         visible={modalVisible}
         onCancel={() => setModalVisible(false)}
         footer={null}
+        width={600}
+        style={{ borderRadius: theme.borderRadius.lg }}
       >
         <Form
           form={form}
@@ -470,7 +499,17 @@ const TrainManagement = () => {
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" block>
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              block
+              style={{
+                background: theme.colors.primary,
+                borderColor: theme.colors.primary,
+                borderRadius: theme.borderRadius.md,
+                height: '40px'
+              }}
+            >
               Create Train
             </Button>
           </Form.Item>
